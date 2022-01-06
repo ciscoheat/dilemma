@@ -6,8 +6,8 @@
     export let cheat
 </script>
 
-<input type="name" bind:value={name} class="u-text-center">
-<div class="card score my-2">
+<input type="name" bind:value={name} class="u-text-center input-large">
+<div class="card score my-2 px-3" style="margin:0 auto; width:max-content;">
     <div class="content u-center">
         <h1>{score}</h1>
     </div>
@@ -27,7 +27,7 @@
 
 <style lang="scss">
     .score {
-        margin-left: 30%;
-        margin-right: 30%;
+        margin-left: auto;
+        margin-right: auto;
     }
 </style>
