@@ -32,9 +32,6 @@
 		MODALS_closeCurrent()
     }
 
-    $: SCORES_player1 = $rounds.reduce((score, round) => score + RULES__calcScore(round[0], round[1]), 0)
-    $: SCORES_player2 = $rounds.reduce((score, round) => score + RULES__calcScore(round[1], round[0]), 0)
-
     ///////////////////////////////////////////////////////
 
     const ROUNDS = rounds
@@ -125,6 +122,9 @@
         }
     }
 
+	$: player1score = $rounds.reduce((score, round) => score + RULES__calcScore(round[0], round[1]), 0)
+    $: player2score = $rounds.reduce((score, round) => score + RULES__calcScore(round[1], round[0]), 0)
+
 	///////////////////////////////////////////////////////
 
 </script>
@@ -139,11 +139,11 @@
             <h2 class="my-1">Round {$rounds.length+1}</h2>
         </div>
         <div class="grid-c-5">
-            <Player bind:name={$name1} score={SCORES_player1} state={ACTION1} coop={ACTION1_toggleCoop} cheat={ACTION1_toggleCheat}></Player>
+            <Player bind:name={$name1} score={player1score} state={ACTION1} coop={ACTION1_toggleCoop} cheat={ACTION1_toggleCheat}></Player>
         </div>
         <div class="grid-c-2"></div>
         <div class="grid-c-5">
-            <Player bind:name={$name2} score={SCORES_player2} state={ACTION2} coop={ACTION2_toggleCoop} cheat={ACTION2_toggleCheat}></Player>
+            <Player bind:name={$name2} score={player2score} state={ACTION2} coop={ACTION2_toggleCoop} cheat={ACTION2_toggleCheat}></Player>
         </div>
         <div class="options grid-c-12 u-flex u-justify-center mt-4">
 			<ModalOpen name={"restart"} opener={MODALS_open}>
@@ -173,7 +173,7 @@
         <div class="modal-body">
 			<table class="table mb-0">
 				<tbody>
-					<Scorefield on:input={RULES_update} field={"coop"} title={"Coop score"} actions={[true, true]} points={$RULES.coop}></Scorefield>
+					<Scorefield on:input={RULES_update} field={"coop"} title={"Cooperate score"} actions={[true, true]} points={$RULES.coop}></Scorefield>
 					<Scorefield on:input={RULES_update} field={"defect"} title={"Defect score"} actions={[false, false]} points={$RULES.defect}></Scorefield>
 					<Scorefield on:input={RULES_update} field={"win"} title={"Win score"} actions={[false, true]} points={$RULES.win}></Scorefield>
 					<Scorefield on:input={RULES_update} field={"lose"} title={"Lose score"} actions={[true, false]} points={$RULES.lose}></Scorefield>
