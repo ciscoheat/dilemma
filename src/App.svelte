@@ -26,6 +26,7 @@
 
     const SCORES_reset = () => {
         SCORES.update(() => initialState.scores)
+		openModal('options')
     }
 
     $: SCORES_player1 = $rounds.reduce((score, round) => score + SCORES__calc(round[0], round[1]), 0)
@@ -36,9 +37,9 @@
     const ROUNDS = rounds
 
     const ROUNDS_restart = () => {
-        if(!window.confirm('Are you sure?')) return
         ROUNDS.update(r => [])
         ACTION1 = ACTION2 = null
+		closeModals()
     }
 
     const ROUNDS_add = (action1, action2) => {
@@ -65,7 +66,7 @@
         if(ACTION1 !== null && ACTION2 !== null) {
             const a1 = ACTION1
             const a2 = ACTION2
-            setTimeout(() => ROUNDS_add(a1, a2), 200)
+            setTimeout(() => ROUNDS_add(a1, a2), 150)
         }
     }
 
@@ -92,12 +93,13 @@
 		}
 	}
 
-	const closeModals = () => {
-		const modals = document.querySelectorAll('.modal-close') as NodeListOf<HTMLElement>
-		for (const modal of modals) {
-			modal.click()
-		}
+	const openModal = (name : 'options' | 'restart' | 'reset' | '') => {
+		const target = '#' + name
+		window.location.replace(target)
+		if(!name) history.replaceState({}, document.title, ".")
 	}
+
+	const closeModals = () => openModal('')
 
 </script>
 
@@ -116,7 +118,9 @@
             <Player bind:name={$name2} score={SCORES_player2} state={ACTION2} coop={ACTION2_toggleCoop} cheat={ACTION2_toggleCheat}></Player>
         </div>
         <div class="options grid-c-12 u-flex u-justify-center mt-4">
-            <div class="btn outline btn-danger" on:click={e => ROUNDS_restart()}>Restart</div>
+			<a href="#restart">
+    	        <div class="btn outline btn-danger">Restart</div>
+			</a>
             <a href="#options">
                 <div class="btn outline btn-info">Options</div>
             </a>
@@ -124,12 +128,12 @@
     </div>
 </div>
 
-<div class="modal modal-animated--zoom-in" id="options" on:click={e => closeModals()}>
+<div class="modal modal-animated--zoom-in" id="options" on:click|self={() => closeModals()}>
     <div class="modal-content" role="document">
         <div class="modal-header">
             <div class="modal-title u-flex u-justify-space-between">
                 <div class="mr-3">Options</div>
-                <a href="#" class="u-pull-right modal-close" aria-label="Close">
+                <a href="javascript:;" on:click={() => closeModals()} class="u-pull-right btn-close" aria-label="Close">
                     <span class="icon">
                         <i class="fa-wrapper fa fa-times"></i>
                     </span>
@@ -141,10 +145,34 @@
             <Scorefield on:input={SCORES_update} field={"defect"} title={"Defect score"} actions={[false, false]} points={$SCORES.defect}></Scorefield>
             <Scorefield on:input={SCORES_update} field={"win"} title={"Win score"} actions={[false, true]} points={$SCORES.win}></Scorefield>
             <Scorefield on:input={SCORES_update} field={"lose"} title={"Lose score"} actions={[true, false]} points={$SCORES.lose}></Scorefield>
-            <div class="btn outline btn-danger mt-2" on:click={() => SCORES_reset()}>Reset scores</div>
+            <a href="#reset">
+				<div class="btn outline btn-danger mt-2">Reset scores</div>
+			</a>
 			<p class="faded" style="line-height:1.33rem">
 				Use keyboard 1,2 keys to click buttons.
 			</p>
+        </div>
+    </div>
+</div>
+
+<div class="modal modal-animated--zoom-in" id="restart" on:click|self={e => closeModals()}>
+    <div class="modal-content" role="document">
+        <div class="modal-body">
+			<h5>Are you sure?</h5>
+			<div class="btn btn-danger" on:click={() => ROUNDS_restart()}>Yes</div>
+			<div class="btn btn-plain" on:click={() => closeModals()}>No</div>
+        </div>
+    </div>
+</div>
+
+<div class="modal modal-animated--zoom-in" id="reset">
+    <div class="modal-content" role="document">
+        <div class="modal-body">
+			<h5>Are you sure?</h5>
+			<div class="btn btn-danger" on:click={() => SCORES_reset()}>Yes</div>
+			<a href="#options" class="close-btn p-0" aria-label="Close">
+				<div class="btn btn-plain">No</div>
+			</a>
         </div>
     </div>
 </div>
