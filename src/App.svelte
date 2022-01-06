@@ -1,5 +1,5 @@
 <script lang="ts">
-    // # Svelte with DCI
+    // # DCI with Svelte
     //
     // If you like, open the [demo app](https://dilemma.surge.sh/) in a new tab to follow along better.
     //
@@ -34,16 +34,18 @@
     //
     // Role naming should be made according to the mental model
     // of the users, domain experts and other people related to the project.
+    //
+    // The naming of Roles is convention-based. It is UPPERCASE for this project, to easily distinguish 
+    // between Roles and ordinary variables when reading the code.
 
-    // ## Defining roles
-    // The naming of Roles is convention-based. It is UPPERCASE here, to easily distinguish 
-    // between roles and ordinary variables when reading the code.
+    // ### The 'RULES' Role
 
     // A Role is defined by adding a variable followed by a type, that determines what objects can play this role.
+    // Here we define a Role called `RULES`.
     const RULES : {
-        // To play the `RULES` Role, an object needs a method called `update` that takes an `Updater<Rules>`.
+        // To play the `RULES` Role, we specify that an object needs a method called `update` that takes an `Updater<Rules>`:
         update: (this : void, updater: Updater<Rules>) => void
-    // Lastly, the assignment of the object playing the Role, the **RolePlayer**, is made. This is called **Role-binding**.
+    // Lastly is the assignment of the object playing the Role, the **RolePlayer**, is made. This is called **Role-binding**.
     } = rules 
 
     // ## RoleMethods
@@ -100,7 +102,9 @@
         MODALS_closeCurrent()
     }
 
-    // Next Role is called `ROUNDS`, counting the number of rounds in the game.
+    // ### The 'ROUNDS' Role
+
+    // Next Role is called `ROUNDS`, keeping track of the number of rounds in the game.
     //
     // It has almost the same contract as the `RULES` role. This hints that there
     // should be a general type of object that can play these two Roles - a Svelte store in this case.
@@ -121,12 +125,14 @@
         MODALS_closeAll()
     }
 
-    // Adding a round to the game is done here.
+    // Adding a round to the game here. 
     const ROUNDS_add = (action1, action2) => {
         ROUNDS.update(r => [...r, [action1, action2] as const])
         ACTION1_reset()
         ACTION2_reset()
     }
+
+    // ### Role: ACTION1
 
     // A Role is defined with `let` this time, not `const`. It is also not best DCI practice, even
     // frowned upon, but for [primitive types](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#the-primitives-string-number-and-boolean)
@@ -138,6 +144,8 @@
     const ACTION1_toggleCheat = () => ACTION1 = (ACTION1 === false ? null : false)
     const ACTION1_reset = () => ACTION1 = null
 
+    // ### Role: ACTION2
+
     // Same for the action state of the other player.
     // To avoid `let`, an object could be created with methods, and specify them in the RoleObjectContract,
     // but let's keep things simple for now.
@@ -147,34 +155,68 @@
     const ACTION2_toggleCheat = () => ACTION2 = (ACTION2 === false ? null : false)
     const ACTION2_reset = () => ACTION2 = null
 
-    ///////////////////////////////////////////////////////
+    // ### Role: MODALS
 
+    // Could this be a Role that handles modals? It certainly seems so, and it's quite simple -
+    // just an array of strings. With DCI, data objects are allowed to be simple, 
+    // since *Data* (the objects playing a Role) and *Function* (RoleMethods inside a Context) have
+    // different rate of change. The Data changes very infrequently compared to the fast-moving, 
+    // featured-packed functionality of an app.
     const MODALS : string[] = []
 
+    // The contract is simple since the CSS framework is using anchor tags to display modals.
+    // So now we can add functionality by cooperating with the `WINDOW` Role.
     const MODALS_open = (name = '') => {
-        const target = '#' + name
-        window.location.replace(target)
+        WINDOW_goto('#' + name)
 
         if(!name) {
+            // Remember, only call or modify the RolePlayer through its own RoleMethods!
             MODALS.length = 0
-            history.replaceState({}, document.title, ".")
+            WINDOW_removeHash()
         } else {
             MODALS.push(name)
         }
     }
 
-    const MODALS_closeCurrent = (_ = null) => {
-        // Remove the current one
-        MODALS.pop()
-        // Open the previous one, if it exists
-        MODALS_open(MODALS.pop())
+    // Closing a modal can now be done by manipulating the array like a stack.
+    const MODALS_closeCurrent = (_ = null) => {        
+        MODALS.pop() // Remove the current modal        
+        MODALS_open(MODALS.pop()) // Open the previous one, if it exists
     }
 
+    // Finally for the Role, closing all modals.
     const MODALS_closeAll = () => MODALS_open('')
 
-    ///////////////////////////////////////////////////////
+    // ### The WINDOW Role
 
-    const WINDOW = null
+    // The WINDOW Role is played by the browser window. The DCI-purist way would be to
+    // create a type with exactly what's needed to play the Role.
+    //
+    // The most obvious advantage is that we're making the Role more generic. 
+    // Any object fulfilling the contract type can now be a WINDOW, not just the browser, which
+    // certainly is useful if porting the app to another platform.
+    //
+    // Another interesting advantage is that we only observe what the Roles can do in the current Context. 
+    // This is called "Full OO", a powerful concept that you can 
+    // [read more about here](https://groups.google.com/d/msg/object-composition/umY_w1rXBEw/hyAF-jPgFn4J), but basically, 
+    // by doing this we don't need to start digging into the browser Window API, or essentially anything outside the current Context.
+    //
+    // This is very important for [locality](http://www.saturnflyer.com/blog/jim/2015/04/21/locality-and-cohesion/), 
+    // the ability to understand code by looking at only a small portion of it.
+    //
+    // So, should we do it? In a large project, most likely. But this is a small one, and the browser Window interface is
+    // well known to most programmers, so in this case, we can do without it.
+    //
+    // The `WINDOW` RoleMethods can be studied if you want to know more about the exact functionality, but in general,
+    // looking at the names should be enough to understand what will happen. Naming is important, of course, and when
+    // cooperating with users and domain experts, a terminology should emerge that should be reflected in the RoleMethod names.
+    const WINDOW = window
+
+    const WINDOW_goto = (url : string) =>
+        WINDOW.location.replace(url)
+
+    const WINDOW_removeHash = () => 
+        history.replaceState({}, WINDOW.document.title, ".")
 
     const WINDOW_keyup = (e : KeyboardEvent) => {
         const target = e.target as HTMLElement
@@ -197,21 +239,44 @@
         }
     }
 
-    ///// Declarations ////////////////////////////////////
+    // ## Some declarations
 
+    // The Roles are done! Usually, there are some loose ends to tie up. For example,
+    // we want to calculate and display the player scores based upon the rules. The app is simple enough
+    // for there to be no `Player´ object, so this is a perfect match for a few Svelte declarations.
+    $: player1score = $rounds.reduce((score, round) => score + RULES_calcScore(round[0], round[1]), 0)
+    $: player2score = $rounds.reduce((score, round) => score + RULES_calcScore(round[1], round[0]), 0)
+
+    // Another thing we want to do is to add a new round when both player actions are specified.
+    // This could be done in the `ACTION1` and `ACTION2` RoleMethods, since they manage changes of them,
+    // but hey, this is Svelte. We can separate this with a declaration, but beware...
     $: {
-        // Add a round if both buttons are pressed
-        if(ACTION1 !== null && ACTION2 !== null) {
+        // By comparing Roles with something, we are actually accessing the RolePlayers! 
+        // This is not allowed, if you remember the out of character problem. 
+        // It opens up for all sorts of issues. So we could very well be bitten by basically laziness in the future.
+        // However, it's a perfect way of getting into DCI, so if you've read this far and want to dig in,
+        // clone [the repo](https://github.com/ciscoheat/dilemma) and make an attempt! 
+        // Open an issue if you have any questions.
+        if(ACTION1 !== null && ACTION2 !== null) {            
             const a1 = ACTION1
             const a2 = ACTION2
             setTimeout(() => ROUNDS_add(a1, a2), 150)
         }
     }
 
-    $: player1score = $rounds.reduce((score, round) => score + RULES_calcScore(round[0], round[1]), 0)
-    $: player2score = $rounds.reduce((score, round) => score + RULES_calcScore(round[1], round[0]), 0)
+    // ## DCI resources
 
-    ///////////////////////////////////////////////////////
+    // The rest of the component should be pretty much self-explanatory if you've done the Svelte tutorial.
+    //
+    // This has just scratched the surface of the DCI paradigm, and there are plenty of resources if you want to know more, I'll list them right below.
+    //
+    // The best way to ask anything is by opening an issue at [the repo](https://github.com/ciscoheat/dilemma) of this project.
+    // Hope to hear from you!
+    //
+    // - [Official DCI website](http://fulloo.info/)
+    // - [FAQ](http://fulloo.info/doku.php?id=faq)
+    // - [Discussion group](https://groups.google.com/forum/?fromgroups#!forum/object-composition)
+    // - [Wikipedia](http://en.wikipedia.org/wiki/Data,_Context,_and_Interaction)
 
 </script>
 
