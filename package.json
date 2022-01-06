@@ -7,7 +7,8 @@
     "dev": "rollup -c -w",
     "start": "sirv public --no-clear",
     "check": "svelte-check --tsconfig ./tsconfig.json",
-    "deploy": "surge public dilemma.surge.sh"
+    "deploy": "surge public dilemma.surge.sh",
+    "docs": "docco -o \"public/docs\" src/App.svelte"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^17.0.0",

@@ -1,7 +1,7 @@
 <script lang="ts">
     // # DCI with Svelte
     //
-    // If you like, open the [demo app](https://dilemma.surge.sh/) in a new tab to follow along better.
+    // If you like, open the [demo app](https://dilemma.surge.sh/) in a new tab to follow along. Source maps are included.
     //
     // A Svelte component can be considered a [DCI](https://en.wikipedia.org/wiki/Data,_context_and_interaction) Context,
     // which is an exciting programming paradigm. It describes a network of objects, cooperating to provide functionality 
@@ -45,27 +45,30 @@
     const RULES : {
         // To play the `RULES` Role, we specify that an object needs a method called `update` that takes an `Updater<Rules>`:
         update: (this : void, updater: Updater<Rules>) => void
-    // Lastly is the assignment of the object playing the Role, the **RolePlayer**, is made. This is called **Role-binding**.
+    // Lastly is the assignment of the object playing the Role, the **RolePlayer**, is made. 
+    // This is called **Role-binding** and should only be done once in the Context, as we will see later. `const` is very useful
+    // for enforcing this.
     } = rules 
 
     // ## RoleMethods
     // The interaction between objects in the `Context` is done through **RoleMethods**, which are basically 
-    // methods related to a Role within a Context (never outside it). They should be considered methods attached to
-    // the object at runtime when the object is playing its Role, like Neo plugging into the Matrix.
+    // methods related to a Role within a Context (never outside it). 
+    //
+    // A RoleMethod should be considered a methods attached to an object when the object is playing its Role inside a Context. 
+    // This is similar to Neo plugging into the Matrix, suddenly being very versatile.
     //
     // The RoleMethods for a Role should be placed directly below its Role, to keep things local and easy to overview.
     //
     // The name of a RoleMethod is also convention-based, in this case we're using `ROLE_methodName`.
 
-    // Here is the definition of a RoleMethod for the `RULES` Role called `update`, which
-    // is almost self-explanatory. It handles updating the rules.
-    // The method signature should be as explicit as possible, so the compiler can
-    // catch any problems in the Context.
+    // Here is the definition of a RoleMethod for `RULES` called `update`, which handles updating the rules, pretty self-explanatory.
+    // The method signature should be as explicit as possible, so the compiler can catch any problems in the Context.
     const RULES_update = (e : CustomEvent<{field : string, value : number}>) => {
 
-        // In the RoleMethod, the contract method `update` is called on its underlying object (the Roleplayer). 
+        // Inside this RoleMethod, the contract method `update` we defined above is called on its underlying object (the Roleplayer). 
+        //
         // A very important rule is that **only the Role's own RoleMethods can call its RoleObjectContract!**
-        // This makes the code more local, and prevents other Roles from tampering with another RolePlayer. 
+        // This restriction is very useful since it prevents other Roles from tampering directly with another RolePlayer. 
         // In the theater analogy, it would be like an actor suddenly being out of character.
         RULES.update(r => {
             r[e.detail.field] = e.detail.value
@@ -78,9 +81,11 @@
     // Just by contextualizing a methods, connecting it to a Role, makes the code easier
     // to understand. And there are more advantages...
     const RULES_calcScore = (player : Choice, opponent : Choice) => {
-        // We refer directly to a Svelte store here. In general this is not best DCI practice
+        // ### Data access
+
+        // We refer directly to a Svelte store here. In general this is not best DCI practice,
         // since Roles should only communicate through their RoleMethods, but since it is
-        // a Svelte practise to refer to store data like this, and also given that the accessed 
+        // a Svelte standard to refer to store data like this, and also given that the accessed 
         // data is immutable, it's ok to do it.
         if(player == opponent)
             return player ? $rules.coop : $rules.defect
@@ -93,10 +98,11 @@
     //
     // This is basically describing runtime system behavior, through a network of interacting objects.
     // We can follow the message flow inside the Context, understanding how the objects are
-    // cooperating to further the purpose of the Context.
+    // cooperating to further the purpose of the Context. No patterns, inheritance or any engineering
+    // structures obstructing what's really going on in the system.
     //
     // In the theater analogy, this would be like an actor reading a line from the script, 
-    // then waiting for another actor to say its line.
+    // then waiting for another actor to say the next line.
     const RULES_reset = () => {
         RULES.update(r => initialState.rules)
         MODALS_closeCurrent()
@@ -125,7 +131,6 @@
         MODALS_closeAll()
     }
 
-    // Adding a round to the game here. 
     const ROUNDS_add = (action1, action2) => {
         ROUNDS.update(r => [...r, [action1, action2] as const])
         ACTION1_reset()
@@ -165,7 +170,7 @@
     const MODALS : string[] = []
 
     // The contract is simple since the CSS framework is using anchor tags to display modals.
-    // So now we can add functionality by cooperating with the `WINDOW` Role.
+    // So now we can add functionality by interacting with the `WINDOW` Role.
     const MODALS_open = (name = '') => {
         WINDOW_goto('#' + name)
 
@@ -266,7 +271,7 @@
 
     // ## DCI resources
 
-    // The rest of the component should be pretty much self-explanatory if you've done the Svelte tutorial.
+    // The rest of the component should be pretty much self-explanatory if you've done the [Svelte tutorial](https://svelte.dev/tutorial/basics).
     //
     // This has just scratched the surface of the DCI paradigm, and there are plenty of resources if you want to know more, I'll list them right below.
     //
@@ -303,6 +308,9 @@
             <ModalOpen name={"rules"} opener={MODALS_open}>
                 <div class="btn outline btn-info">Change rules</div>
             </ModalOpen>
+        </div>
+        <div class="grid-c-12 u-text-center pt-1">
+            <a href="./docs/src/App.html" class="text-gray-500" target="_blank"><small>Annotated source code</small></a>
         </div>
     </div>
 </div>
