@@ -4,7 +4,7 @@
     // If you like, open the [demo app](https://dilemma.surge.sh/) in a new tab to follow along. Source maps are included.
     //
     // A Svelte component can be considered a [DCI](https://en.wikipedia.org/wiki/Data,_context_and_interaction) Context,
-    // which is an exciting programming paradigm. It describes a network of objects, cooperating to provide functionality 
+    // DCI being a very exciting programming paradigm. It describes a network of objects, cooperating to provide functionality 
     // according to a mental model, in a clear, readable way.
     //
     // A useful analogy for a Context is a theater play, so it will be used throughout this example to explain the DCI concepts.
@@ -27,7 +27,7 @@
     // # Roles
 
     // Just like a character in a theater play, a **Role** is 
-    // a character in a Context, played by an object.
+    // a character in a **Context**, played by an object.
     //
     // The Role itself is an identifier with a type (called
     // **RoleObjectContract** or **contract**) that determines what objects can play this particular Role.
