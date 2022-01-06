@@ -69,7 +69,39 @@
         }
     }
 
+	///////////////////////////////////////////////////////
+
+	const windowKeyup = (e : KeyboardEvent) => {
+		const target = e.target as HTMLElement
+		if(!target?.tagName || target.tagName.toUpperCase() == 'INPUT') return
+
+		if(e.code == 'Digit1') {
+			if(ACTION1 === null)
+				ACTION1_toggleCoop()
+			else
+				ACTION2_toggleCoop()
+		}
+		else if(e.code == 'Digit2') {
+			if(ACTION1 === null)
+				ACTION1_toggleCheat()
+			else
+				ACTION2_toggleCheat()
+		}
+		else if(e.code == "Escape") {
+			closeModals()
+		}
+	}
+
+	const closeModals = () => {
+		const modals = document.querySelectorAll('.modal-close') as NodeListOf<HTMLElement>
+		for (const modal of modals) {
+			modal.click()
+		}
+	}
+
 </script>
+
+<svelte:window on:keyup={windowKeyup}/>
 
 <div class="u-flex u-justify-center">
     <div class="grid">
@@ -92,12 +124,12 @@
     </div>
 </div>
 
-<div class="modal  modal-animated--zoom-in" id="options">
+<div class="modal modal-animated--zoom-in" id="options" on:click={e => closeModals()}>
     <div class="modal-content" role="document">
         <div class="modal-header">
             <div class="modal-title u-flex u-justify-space-between">
                 <div class="mr-3">Options</div>
-                <a href="#CLOSE" class="u-pull-right" aria-label="Close">
+                <a href="#" class="u-pull-right modal-close" aria-label="Close">
                     <span class="icon">
                         <i class="fa-wrapper fa fa-times"></i>
                     </span>
@@ -110,6 +142,9 @@
             <Scorefield on:input={SCORES_update} field={"win"} title={"Win score"} actions={[false, true]} points={$SCORES.win}></Scorefield>
             <Scorefield on:input={SCORES_update} field={"lose"} title={"Lose score"} actions={[true, false]} points={$SCORES.lose}></Scorefield>
             <div class="btn outline btn-danger mt-2" on:click={() => SCORES_reset()}>Reset scores</div>
+			<p class="faded" style="line-height:1.33rem">
+				Use keyboard 1,2 keys to click buttons.
+			</p>
         </div>
     </div>
 </div>
