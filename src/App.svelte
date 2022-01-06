@@ -14,7 +14,7 @@
     const RULES = rules
 
     const RULES_calcScore = (player : Choice, opponent : Choice) => {
-        if(player == opponent) 
+        if(player == opponent)
             return player ? $RULES.coop : $RULES.defect
         else
             return player ? $RULES.lose : $RULES.win
@@ -52,11 +52,11 @@
     ///////////////////////////////////////////////////////
 
     let ACTION1 : boolean | null = null
-    
+
     const ACTION1_toggleCoop = () => ACTION1 = (ACTION1 === true ? null : true)
     const ACTION1_toggleCheat = () => ACTION1 = (ACTION1 === false ? null : false)
 	const ACTION1_reset = () => ACTION1 = null
-    
+
     let ACTION2 : boolean | null = null
 
     const ACTION2_toggleCoop = () => ACTION2 = (ACTION2 === true ? null : true)
@@ -182,9 +182,12 @@
 			<ModalOpen name={"reset"} opener={MODALS_open}>
 				<div class="btn outline btn-danger mt-2">Reset rules</div>
 			</ModalOpen>
-			<p class="faded" style="line-height:1.33rem">
-				Use keyboard 1,2 keys to click buttons.
-			</p>
+			<div class="help faded u-text-center">
+				<p>Use keyboard 1,2 keys to click buttons.</p>
+				<p>
+					<a target="_blank" href="https://en.wikipedia.org/wiki/Prisoner%27s_dilemma">What is the Prisoner's dilemma?</a>
+				</p>
+			</div>
         </div>
     </div>
 </Modal>
@@ -215,4 +218,11 @@
     .options {
         gap: 20px;
     }
+
+	.help {
+		p {
+			line-height: 1.33rem;
+			margin-bottom: 0.5rem;
+		}
+	}
 </style>
