@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Choice } from './lib/types';
-    import {initialState, name1, name2, rounds, scores} from './lib/store'
+    import {initialState, name1, name2, rounds, rules} from './lib/store'
 
     import Player from './lib/Player.svelte';
     import Scorefield from './lib/Scorefield.svelte';
@@ -10,29 +10,29 @@
 
     ///////////////////////////////////////////////////////
 
-    const SCORES = scores
+    const RULES = rules
 
-    const SCORES__calc = (player : Choice, opponent : Choice) => {
+    const RULES__calcScore = (player : Choice, opponent : Choice) => {
         if(player == opponent) 
-            return player ? $SCORES.coop : $SCORES.defect
+            return player ? $RULES.coop : $RULES.defect
         else
-            return player ? $SCORES.lose : $SCORES.win
+            return player ? $RULES.lose : $RULES.win
     }
 
-    const SCORES_update = (e) => {
-        SCORES.update(s => {
+    const RULES_update = (e) => {
+        RULES.update(s => {
             s[e.detail.field] = e.detail.value
             return s
         })
     }
 
-    const SCORES_reset = () => {
-        SCORES.update(() => initialState.scores)
+    const RULES_reset = () => {
+        RULES.update(() => initialState.rules)
 		MODALS_closeCurrent()
     }
 
-    $: SCORES_player1 = $rounds.reduce((score, round) => score + SCORES__calc(round[0], round[1]), 0)
-    $: SCORES_player2 = $rounds.reduce((score, round) => score + SCORES__calc(round[1], round[0]), 0)
+    $: SCORES_player1 = $rounds.reduce((score, round) => score + RULES__calcScore(round[0], round[1]), 0)
+    $: SCORES_player2 = $rounds.reduce((score, round) => score + RULES__calcScore(round[1], round[0]), 0)
 
     ///////////////////////////////////////////////////////
 
@@ -65,17 +65,6 @@
     const ACTION2_toggleCheat = () => ACTION2 = (ACTION2 === false ? null : false)
 	const ACTION2_reset = () => ACTION2 = null
 
-    ///////////////////////////////////////////////////////
-
-    $: {
-        // Add a round if something changed
-        if(ACTION1 !== null && ACTION2 !== null) {
-            const a1 = ACTION1
-            const a2 = ACTION2
-            setTimeout(() => ROUNDS_add(a1, a2), 150)
-        }
-    }
-
 	///////////////////////////////////////////////////////
 
 	const MODALS : string[] = []
@@ -103,17 +92,19 @@
 
 	///////////////////////////////////////////////////////
 
-	const windowKeyup = (e : KeyboardEvent) => {
-		const target = e.target as HTMLElement
-		if(!target?.tagName || target.tagName.toUpperCase() == 'INPUT') return
+	const WINDOW = window
 
-		if(e.code == 'Digit1') {
+	const WINDOW_keyup = (e : KeyboardEvent) => {
+		const target = e.target as HTMLElement
+		const isInput = !!(target?.tagName.toUpperCase() == 'INPUT')
+
+		if(e.code == 'Digit1' && !isInput) {
 			if(ACTION1 === null)
 				ACTION1_toggleCoop()
 			else
 				ACTION2_toggleCoop()
 		}
-		else if(e.code == 'Digit2') {
+		else if(e.code == 'Digit2' && !isInput) {
 			if(ACTION1 === null)
 				ACTION1_toggleCheat()
 			else
@@ -124,11 +115,22 @@
 		}
 	}
 
+	$: {
+        // Add a round if both buttons are pressed
+        if(ACTION1 !== null && ACTION2 !== null) {
+            const a1 = ACTION1
+            const a2 = ACTION2
+            setTimeout(() => ROUNDS_add(a1, a2), 150)
+        }
+    }
+
+	///////////////////////////////////////////////////////
+
 </script>
 
 <!-- HTML -->
 
-<svelte:window on:keyup={windowKeyup}/>
+<svelte:window on:keyup={WINDOW_keyup}/>
 
 <div class="u-flex u-justify-center">
     <div class="grid">
@@ -146,8 +148,8 @@
 			<ModalOpen name={"restart"} opener={MODALS_open}>
     	        <div class="btn outline btn-danger">Restart</div>
 			</ModalOpen>
-            <ModalOpen name={"options"} opener={MODALS_open}>
-                <div class="btn outline btn-info">Options</div>
+            <ModalOpen name={"rules"} opener={MODALS_open}>
+                <div class="btn outline btn-info">Change rules</div>
             </ModalOpen>
         </div>
     </div>
@@ -155,11 +157,11 @@
 
 <!-- Modals -->
 
-<div class="modal modal-animated--zoom-in" id="options" on:click|self={() => MODALS_closeCurrent()}>
+<div class="modal modal-animated--zoom-in" id="rules" on:click|self={() => MODALS_closeCurrent()}>
     <div class="modal-content" role="document">
         <div class="modal-header">
             <div class="modal-title u-flex u-justify-space-between">
-                <div class="mr-3">Options</div>
+                <div class="mr-3">Rules</div>
 				<ModalClose closer={MODALS_closeCurrent}>
                     <span class="icon">
                         <i class="fa-wrapper fa fa-times"></i>
@@ -168,12 +170,12 @@
             </div>
         </div>
         <div class="modal-body">
-            <Scorefield on:input={SCORES_update} field={"coop"} title={"Coop score"} actions={[true, true]} points={$SCORES.coop}></Scorefield>
-            <Scorefield on:input={SCORES_update} field={"defect"} title={"Defect score"} actions={[false, false]} points={$SCORES.defect}></Scorefield>
-            <Scorefield on:input={SCORES_update} field={"win"} title={"Win score"} actions={[false, true]} points={$SCORES.win}></Scorefield>
-            <Scorefield on:input={SCORES_update} field={"lose"} title={"Lose score"} actions={[true, false]} points={$SCORES.lose}></Scorefield>
+            <Scorefield on:input={RULES_update} field={"coop"} title={"Coop score"} actions={[true, true]} points={$RULES.coop}></Scorefield>
+            <Scorefield on:input={RULES_update} field={"defect"} title={"Defect score"} actions={[false, false]} points={$RULES.defect}></Scorefield>
+            <Scorefield on:input={RULES_update} field={"win"} title={"Win score"} actions={[false, true]} points={$RULES.win}></Scorefield>
+            <Scorefield on:input={RULES_update} field={"lose"} title={"Lose score"} actions={[true, false]} points={$RULES.lose}></Scorefield>
 			<ModalOpen name={"reset"} opener={MODALS_open}>
-				<div class="btn outline btn-danger mt-2">Reset scores</div>
+				<div class="btn outline btn-danger mt-2">Reset rules</div>
 			</ModalOpen>
 			<p class="faded" style="line-height:1.33rem">
 				Use keyboard 1,2 keys to click buttons.
@@ -195,8 +197,8 @@
 <div class="modal modal-animated--zoom-in" id="reset">
     <div class="modal-content" role="document">
         <div class="modal-body">
-			<h5>Reset scoring?</h5>
-			<div class="btn btn-danger" on:click={() => SCORES_reset()}>Yes</div>
+			<h5>Reset rules?</h5>
+			<div class="btn btn-danger" on:click={() => RULES_reset()}>Yes</div>
 			<ModalClose closer={MODALS_closeCurrent} classes="p-0">
 				<div class="btn btn-plain">No</div>
 			</ModalClose>

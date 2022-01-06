@@ -4,13 +4,13 @@ import type { Match } from './types'
 export const initialState = ({
     names: ['Player 1', 'Player 2'] as const,
     rounds: [],
-    scores: {
+    rules: {
         coop: 2,
         defect: 0,
         win: 3,
         lose: -1
     },
-    __VERSION: 1
+    __VERSION: 2
 } as Match)
 
 let gameState = JSON.parse(window.localStorage.getItem('dilemma')) ?? initialState
@@ -21,18 +21,18 @@ if(gameState.__VERSION != initialState.__VERSION)
 export const name1 = writable(gameState.names[0])
 export const name2 = writable(gameState.names[1])
 export const rounds = writable(gameState.rounds)
-export const scores = writable(gameState.scores)
+export const rules = writable(gameState.rules)
 
 ///////////////////////////////////////////////
 
 const game = derived(
-    [name1, name2, rounds, scores],
-    ([$name1, $name2, $rounds, $scores]) => ({
+    [name1, name2, rounds, rules],
+    ([$name1, $name2, $rounds, $rules]) => ({
         names: [$name1, $name2],
         rounds: $rounds,
-        scores: $scores,
+        rules: $rules,
         __VERSION: initialState.__VERSION
-    })
+    } as Match)
 )
 
 game.subscribe(g => {

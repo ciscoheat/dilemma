@@ -11,11 +11,11 @@ export type Rounds = Round[]
 export interface Match {
     names: FixedLengthArray<2, string>
     rounds: Rounds,
-    scores: Scores,
+    rules: Rules,
     __VERSION: number
 }
 
-export interface Scores {
+export interface Rules {
     coop: number,
     defect: number,
     win: number,
