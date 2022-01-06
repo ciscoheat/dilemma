@@ -13,7 +13,7 @@
 
     const RULES = rules
 
-    const RULES__calcScore = (player : Choice, opponent : Choice) => {
+    const RULES_calcScore = (player : Choice, opponent : Choice) => {
         if(player == opponent) 
             return player ? $RULES.coop : $RULES.defect
         else
@@ -122,8 +122,8 @@
         }
     }
 
-	$: player1score = $rounds.reduce((score, round) => score + RULES__calcScore(round[0], round[1]), 0)
-    $: player2score = $rounds.reduce((score, round) => score + RULES__calcScore(round[1], round[0]), 0)
+	$: player1score = $rounds.reduce((score, round) => score + RULES_calcScore(round[0], round[1]), 0)
+    $: player2score = $rounds.reduce((score, round) => score + RULES_calcScore(round[1], round[0]), 0)
 
 	///////////////////////////////////////////////////////
 
