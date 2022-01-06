@@ -1,10 +1,12 @@
 <script lang="ts">
     import type { Choice } from './lib/types';
+    import {initialState, name1, name2, rounds, scores} from './lib/store'
 
     import Player from './lib/Player.svelte';
     import Scorefield from './lib/Scorefield.svelte';
 
-    import {initialState, name1, name2, rounds, scores} from './lib/store'
+	import ModalOpen from './lib/ModalOpen.svelte';
+	import ModalClose from './lib/ModalClose.svelte';
 
     ///////////////////////////////////////////////////////
 
@@ -26,7 +28,7 @@
 
     const SCORES_reset = () => {
         SCORES.update(() => initialState.scores)
-		openModal('options')
+		MODALS_closeCurrent()
     }
 
     $: SCORES_player1 = $rounds.reduce((score, round) => score + SCORES__calc(round[0], round[1]), 0)
@@ -38,13 +40,15 @@
 
     const ROUNDS_restart = () => {
         ROUNDS.update(r => [])
-        ACTION1 = ACTION2 = null
-		closeModals()
+        ACTION1_reset()
+		ACTION2_reset()
+		MODALS_closeAll()
     }
 
     const ROUNDS_add = (action1, action2) => {
         ROUNDS.update(r => [...r, [action1, action2] as const])
-        ACTION1 = ACTION2 = null
+        ACTION1_reset()
+		ACTION2_reset()
     }
 
     ///////////////////////////////////////////////////////
@@ -53,11 +57,13 @@
     
     const ACTION1_toggleCoop = () => ACTION1 = (ACTION1 === true ? null : true)
     const ACTION1_toggleCheat = () => ACTION1 = (ACTION1 === false ? null : false)
+	const ACTION1_reset = () => ACTION1 = null
     
     let ACTION2 : boolean | null = null
 
     const ACTION2_toggleCoop = () => ACTION2 = (ACTION2 === true ? null : true)
     const ACTION2_toggleCheat = () => ACTION2 = (ACTION2 === false ? null : false)
+	const ACTION2_reset = () => ACTION2 = null
 
     ///////////////////////////////////////////////////////
 
@@ -69,6 +75,31 @@
             setTimeout(() => ROUNDS_add(a1, a2), 150)
         }
     }
+
+	///////////////////////////////////////////////////////
+
+	const MODALS : string[] = []
+
+	const MODALS_open = (name = '') => {
+		const target = '#' + name
+		window.location.replace(target)
+
+		if(!name) {
+			MODALS.length = 0
+			history.replaceState({}, document.title, ".")
+		} else {
+			MODALS.push(name)
+		}
+	}
+
+	const MODALS_closeCurrent = () => {
+		// Remove the current one
+		MODALS.pop()
+		// Open the previous one, if it exists
+		MODALS_open(MODALS.pop())
+	}
+
+	const MODALS_closeAll = () => MODALS_open('')
 
 	///////////////////////////////////////////////////////
 
@@ -89,19 +120,13 @@
 				ACTION2_toggleCheat()
 		}
 		else if(e.code == "Escape") {
-			closeModals()
+			MODALS_closeCurrent()
 		}
 	}
 
-	const openModal = (name : 'options' | 'restart' | 'reset' | '') => {
-		const target = '#' + name
-		window.location.replace(target)
-		if(!name) history.replaceState({}, document.title, ".")
-	}
-
-	const closeModals = () => openModal('')
-
 </script>
+
+<!-- HTML -->
 
 <svelte:window on:keyup={windowKeyup}/>
 
@@ -118,26 +143,28 @@
             <Player bind:name={$name2} score={SCORES_player2} state={ACTION2} coop={ACTION2_toggleCoop} cheat={ACTION2_toggleCheat}></Player>
         </div>
         <div class="options grid-c-12 u-flex u-justify-center mt-4">
-			<a href="#restart">
+			<ModalOpen name={"restart"} opener={MODALS_open}>
     	        <div class="btn outline btn-danger">Restart</div>
-			</a>
-            <a href="#options">
+			</ModalOpen>
+            <ModalOpen name={"options"} opener={MODALS_open}>
                 <div class="btn outline btn-info">Options</div>
-            </a>
+            </ModalOpen>
         </div>
     </div>
 </div>
 
-<div class="modal modal-animated--zoom-in" id="options" on:click|self={() => closeModals()}>
+<!-- Modals -->
+
+<div class="modal modal-animated--zoom-in" id="options" on:click|self={() => MODALS_closeCurrent()}>
     <div class="modal-content" role="document">
         <div class="modal-header">
             <div class="modal-title u-flex u-justify-space-between">
                 <div class="mr-3">Options</div>
-                <a href="javascript:;" on:click={() => closeModals()} class="u-pull-right btn-close" aria-label="Close">
+				<ModalClose closer={MODALS_closeCurrent}>
                     <span class="icon">
                         <i class="fa-wrapper fa fa-times"></i>
                     </span>
-                </a>
+                </ModalClose>
             </div>
         </div>
         <div class="modal-body">
@@ -145,9 +172,9 @@
             <Scorefield on:input={SCORES_update} field={"defect"} title={"Defect score"} actions={[false, false]} points={$SCORES.defect}></Scorefield>
             <Scorefield on:input={SCORES_update} field={"win"} title={"Win score"} actions={[false, true]} points={$SCORES.win}></Scorefield>
             <Scorefield on:input={SCORES_update} field={"lose"} title={"Lose score"} actions={[true, false]} points={$SCORES.lose}></Scorefield>
-            <a href="#reset">
+			<ModalOpen name={"reset"} opener={MODALS_open}>
 				<div class="btn outline btn-danger mt-2">Reset scores</div>
-			</a>
+			</ModalOpen>
 			<p class="faded" style="line-height:1.33rem">
 				Use keyboard 1,2 keys to click buttons.
 			</p>
@@ -155,12 +182,12 @@
     </div>
 </div>
 
-<div class="modal modal-animated--zoom-in" id="restart" on:click|self={e => closeModals()}>
+<div class="modal modal-animated--zoom-in" id="restart" on:click|self={e => MODALS_closeCurrent()}>
     <div class="modal-content" role="document">
         <div class="modal-body">
-			<h5>Are you sure?</h5>
+			<h5>Restart game?</h5>
 			<div class="btn btn-danger" on:click={() => ROUNDS_restart()}>Yes</div>
-			<div class="btn btn-plain" on:click={() => closeModals()}>No</div>
+			<div class="btn btn-plain" on:click={() => MODALS_closeCurrent()}>No</div>
         </div>
     </div>
 </div>
@@ -168,14 +195,16 @@
 <div class="modal modal-animated--zoom-in" id="reset">
     <div class="modal-content" role="document">
         <div class="modal-body">
-			<h5>Are you sure?</h5>
+			<h5>Reset scoring?</h5>
 			<div class="btn btn-danger" on:click={() => SCORES_reset()}>Yes</div>
-			<a href="#options" class="close-btn p-0" aria-label="Close">
+			<ModalClose closer={MODALS_closeCurrent} classes="p-0">
 				<div class="btn btn-plain">No</div>
-			</a>
+			</ModalClose>
         </div>
     </div>
 </div>
+
+<!-- STYLE -->
 
 <style lang="scss">
     .options {
