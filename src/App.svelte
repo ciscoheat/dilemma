@@ -1,6 +1,8 @@
 <script lang="ts">
-    import type { Choice } from './lib/types';
-    import {initialState, name1, name2, rounds, rules} from './lib/store'
+	import type { Updater } from 'svelte/store';
+    import type { Choice, Rounds, Rules } from './lib/types';
+
+    import {initialState, name1, name2, rounds, rules} from './lib/store';
 
     import Player from './lib/Player.svelte';
     import Scorefield from './lib/Scorefield.svelte';
@@ -9,32 +11,36 @@
 	import ModalClose from './lib/ModalClose.svelte';
 	import Modal from './lib/Modal.svelte';
 
-    ///////////////////////////////////////////////////////
+    ///// Roles ///////////////////////////////////////////
 
-    const RULES = rules
+    const RULES : {
+		update: (this : void, updater: Updater<Rules>) => void
+	} = rules
 
     const RULES_calcScore = (player : Choice, opponent : Choice) => {
         if(player == opponent)
-            return player ? $RULES.coop : $RULES.defect
+            return player ? $rules.coop : $rules.defect
         else
-            return player ? $RULES.lose : $RULES.win
+            return player ? $rules.lose : $rules.win
     }
 
     const RULES_update = (e) => {
-        RULES.update(s => {
-            s[e.detail.field] = e.detail.value
-            return s
+        RULES.update(r => {
+            r[e.detail.field] = e.detail.value
+            return r
         })
     }
 
     const RULES_reset = () => {
-        RULES.update(() => initialState.rules)
+        RULES.update(r => initialState.rules)
 		MODALS_closeCurrent()
     }
 
     ///////////////////////////////////////////////////////
 
-    const ROUNDS = rounds
+    const ROUNDS : {
+		update: (this : void, updater: Updater<Rounds>) => void
+	} = rounds
 
     const ROUNDS_restart = () => {
         ROUNDS.update(r => [])
@@ -56,6 +62,8 @@
     const ACTION1_toggleCoop = () => ACTION1 = (ACTION1 === true ? null : true)
     const ACTION1_toggleCheat = () => ACTION1 = (ACTION1 === false ? null : false)
 	const ACTION1_reset = () => ACTION1 = null
+
+	///////////////////////////////////////////////////////
 
     let ACTION2 : boolean | null = null
 
@@ -90,7 +98,7 @@
 
 	///////////////////////////////////////////////////////
 
-	const WINDOW = window
+	const WINDOW = null
 
 	const WINDOW_keyup = (e : KeyboardEvent) => {
 		const target = e.target as HTMLElement
@@ -113,6 +121,8 @@
 		}
 	}
 
+	///// Declarations ////////////////////////////////////
+
 	$: {
         // Add a round if both buttons are pressed
         if(ACTION1 !== null && ACTION2 !== null) {
@@ -129,7 +139,7 @@
 
 </script>
 
-<!-- HTML -->
+<!----- HTML --------------------------------------------->
 
 <svelte:window on:keyup={WINDOW_keyup}/>
 
@@ -156,7 +166,7 @@
     </div>
 </div>
 
-<!-- Modals -->
+<!----- Modals ------------------------------------------->
 
 <Modal name={"rules"} closer={MODALS_closeCurrent}>
     <div class="modal-content" role="document">
@@ -173,10 +183,10 @@
         <div class="modal-body">
 			<table class="table mb-0">
 				<tbody>
-					<Scorefield on:input={RULES_update} field={"coop"} title={"Cooperate score"} actions={[true, true]} points={$RULES.coop}></Scorefield>
-					<Scorefield on:input={RULES_update} field={"defect"} title={"Defect score"} actions={[false, false]} points={$RULES.defect}></Scorefield>
-					<Scorefield on:input={RULES_update} field={"win"} title={"Win score"} actions={[false, true]} points={$RULES.win}></Scorefield>
-					<Scorefield on:input={RULES_update} field={"lose"} title={"Lose score"} actions={[true, false]} points={$RULES.lose}></Scorefield>
+					<Scorefield on:input={RULES_update} field={"coop"} title={"Cooperate score"} actions={[true, true]} points={$rules.coop}></Scorefield>
+					<Scorefield on:input={RULES_update} field={"defect"} title={"Defect score"} actions={[false, false]} points={$rules.defect}></Scorefield>
+					<Scorefield on:input={RULES_update} field={"win"} title={"Win score"} actions={[false, true]} points={$rules.win}></Scorefield>
+					<Scorefield on:input={RULES_update} field={"lose"} title={"Lose score"} actions={[true, false]} points={$rules.lose}></Scorefield>
 				</tbody>
 			</table>
 			<ModalOpen name={"reset"} opener={MODALS_open}>
@@ -212,7 +222,7 @@
     </div>
 </Modal>
 
-<!-- STYLE -->
+<!----- STYLES ------------------------------------------->
 
 <style lang="scss">
     .options {
