@@ -7,6 +7,7 @@
 
 	import ModalOpen from './lib/ModalOpen.svelte';
 	import ModalClose from './lib/ModalClose.svelte';
+	import Modal from './lib/Modal.svelte';
 
     ///////////////////////////////////////////////////////
 
@@ -81,7 +82,7 @@
 		}
 	}
 
-	const MODALS_closeCurrent = () => {
+	const MODALS_closeCurrent = (_ = null) => {
 		// Remove the current one
 		MODALS.pop()
 		// Open the previous one, if it exists
@@ -157,7 +158,7 @@
 
 <!-- Modals -->
 
-<div class="modal modal-animated--zoom-in" id="rules" on:click|self={() => MODALS_closeCurrent()}>
+<Modal name={"rules"} closer={MODALS_closeCurrent}>
     <div class="modal-content" role="document">
         <div class="modal-header">
             <div class="modal-title u-flex u-justify-space-between">
@@ -170,10 +171,14 @@
             </div>
         </div>
         <div class="modal-body">
-            <Scorefield on:input={RULES_update} field={"coop"} title={"Coop score"} actions={[true, true]} points={$RULES.coop}></Scorefield>
-            <Scorefield on:input={RULES_update} field={"defect"} title={"Defect score"} actions={[false, false]} points={$RULES.defect}></Scorefield>
-            <Scorefield on:input={RULES_update} field={"win"} title={"Win score"} actions={[false, true]} points={$RULES.win}></Scorefield>
-            <Scorefield on:input={RULES_update} field={"lose"} title={"Lose score"} actions={[true, false]} points={$RULES.lose}></Scorefield>
+			<table class="table mb-0">
+				<tbody>
+					<Scorefield on:input={RULES_update} field={"coop"} title={"Coop score"} actions={[true, true]} points={$RULES.coop}></Scorefield>
+					<Scorefield on:input={RULES_update} field={"defect"} title={"Defect score"} actions={[false, false]} points={$RULES.defect}></Scorefield>
+					<Scorefield on:input={RULES_update} field={"win"} title={"Win score"} actions={[false, true]} points={$RULES.win}></Scorefield>
+					<Scorefield on:input={RULES_update} field={"lose"} title={"Lose score"} actions={[true, false]} points={$RULES.lose}></Scorefield>
+				</tbody>
+			</table>
 			<ModalOpen name={"reset"} opener={MODALS_open}>
 				<div class="btn outline btn-danger mt-2">Reset rules</div>
 			</ModalOpen>
@@ -182,38 +187,32 @@
 			</p>
         </div>
     </div>
-</div>
+</Modal>
 
-<div class="modal modal-animated--zoom-in" id="restart" on:click|self={e => MODALS_closeCurrent()}>
+<Modal name={"restart"} closer={MODALS_closeCurrent}>
     <div class="modal-content" role="document">
         <div class="modal-body">
-			<h5>Restart game?</h5>
+			<h5 class="mb-3">Restart game?</h5>
 			<div class="btn btn-danger" on:click={() => ROUNDS_restart()}>Yes</div>
-			<div class="btn btn-plain" on:click={() => MODALS_closeCurrent()}>No</div>
+			<div class="btn btn-plain" on:click={MODALS_closeCurrent}>No</div>
         </div>
     </div>
-</div>
+</Modal>
 
-<div class="modal modal-animated--zoom-in" id="reset">
+<Modal name={"reset"} closer={MODALS_closeCurrent}>
     <div class="modal-content" role="document">
         <div class="modal-body">
-			<h5>Reset rules?</h5>
+			<h5 class="mb-3">Reset rules?</h5>
 			<div class="btn btn-danger" on:click={() => RULES_reset()}>Yes</div>
-			<ModalClose closer={MODALS_closeCurrent} classes="p-0">
-				<div class="btn btn-plain">No</div>
-			</ModalClose>
+			<div class="btn btn-plain" on:click={MODALS_closeCurrent}>No</div>
         </div>
     </div>
-</div>
+</Modal>
 
 <!-- STYLE -->
 
 <style lang="scss">
     .options {
         gap: 20px;
-    }
-
-    .modal {
-        background-color: rgba($color: #000000, $alpha: 0.25);
     }
 </style>

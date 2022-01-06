@@ -3,6 +3,6 @@
     export let opener
 </script>
 
-<a href="javascript:;" on:click|preventDefault={() => opener(name)}>
+<a href="javascript:;" class="p-1" on:click|preventDefault={() => opener(name)}>
     <slot></slot>
 </a>
