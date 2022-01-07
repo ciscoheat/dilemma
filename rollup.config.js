@@ -61,8 +61,8 @@ export default {
 		}),
 		commonjs(),
 		typescript({
-			sourceMap: !production,
-			inlineSources: !production
+			sourceMap: true,
+			inlineSources: true
 		}),
 
 		// In dev mode, call `npm run start` once
@@ -75,7 +75,7 @@ export default {
 
 		// If we're building for production (npm run build
 		// instead of npm run dev), minify
-		production && terser()
+		//production && terser()
 	],
 	watch: {
 		clearScreen: false
