@@ -13,7 +13,7 @@
 
     // # Imports
 
-    // First, import types and components. Nothing directly DCI-related, but some of these types will be used as *Data*, the
+    // First, import types and components. Nothing directly DCI-related, but some of these objects will be used as *Data*, the
     // first part of the DCI acronym. These are simple objects like Svelte stores and data structures.
     import type { Updater } from 'svelte/store';
     import type { Choice, Rounds, Rules } from './lib/types';
@@ -35,11 +35,11 @@
     // that determines what objects can play this particular Role.
     //
     // The naming of Roles is convention-based. It is UPPERCASE for this project, to easily distinguish 
-    // between Roles and ordinary variables when reading the code.
+    // between Roles and ordinary variables when reading the code, like in a screenplay script.
 
     // ### The 'RULES' Role
 
-    // A Role is defined by adding a variable followed by a type, that determines what objects can play this role.
+    // A Role is defined by adding a variable followed by a type, that determines what objects can play this Role.
     // Here we define a Role called `RULES`, containing the rules of the game.
     const RULES : {
         // To play the `RULES` Role, we specify that an object needs a method called `update` that takes an `Updater<Rules>`:
@@ -53,13 +53,14 @@
     // The interaction between objects in the `Context` is done through **RoleMethods**, which are basically 
     // methods related to a specific Role within a Context, never outside.
     //
-    // RoleMethods should be considered like methods attached to an object whit it's playing a Role inside a Context.
+    // RoleMethods should be considered like methods attached to an object when it's playing a Role inside a Context.
     // This is similar to Neo plugging into the Matrix, suddenly being very versatile.
     //
-    // Code-wise, since there is no `context` declaration like a `class` in typescript or javascript, 
-    // the RoleMethods for a Role should be placed directly below its Role, to keep a sense of them belonging to their respective Role.
+    // Code-wise, since there is no `context` declaration like `class` in typescript or javascript, 
+    // the RoleMethods for a Role should be placed directly below its Role, to keep a sense of them as a unit,
+    // belonging to their respective Role, like methods in a class.
     //
-    // The name of a RoleMethod is also convention-based, in this case we're using `ROLE_methodName`.
+    // For that reason the naming of a RoleMethod is also convention-based, in this case we're using `ROLE_methodName`.
 
     // Here is the definition of a RoleMethod for `RULES` called `update`, which handles updating the rules, pretty self-explanatory.
     // The method signature should be as explicit as possible, so the compiler can catch any problems in the Context.
@@ -115,9 +116,6 @@
     //
     // It has almost the same contract as the `RULES` role. This hints that there
     // should be a generic type of object that can play these two Roles - a Svelte store in this case.
-    //
-    // It's very convenient to add functionality to the Svelte store like this, without having to
-    // extend or subclass it in any way. Things are kept where they should be, in Context.
     const ROUNDS : {
         update: (this : void, updater: Updater<Rounds>) => void
     } = rounds
@@ -125,6 +123,9 @@
     // A RoleMethod is defined that restarts the rounds in the game.
     // It interacts with other Roles, asking them to do things like resetting and closing themselves.
     // Again, it is very clear what the code does.
+    //
+    // It's very convenient to add functionality to another object like this, without having to
+    // extend or subclass it in any way. Things are kept where they should be, in Context.
     const ROUNDS_restart = () => {
         ROUNDS.update(r => [])
         ACTION1_reset()
@@ -140,10 +141,10 @@
 
     // ### Role: ACTION1
 
-    // A Role is defined with `let` this time, not `const`. It is also not best DCI practice, even
-    // frowned upon, but for [primitive types](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#the-primitives-string-number-and-boolean)
-    // this is unfortunately needed, since it will mutate. Be extra careful that only the RoleMethods
-    // of the Role are changing it!
+    // For the game, we need a Role that indicates what action a player wants to take for the current round. 
+    // It is defined with `let` this time, not `const`. That's not best DCI practice, even frowned upon, 
+    // but for [primitive types](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#the-primitives-string-number-and-boolean)
+    // this is unfortunately needed, since it will mutate. Be extra careful that only the RoleMethods of the Role are changing it!
     let ACTION1 : boolean | null = null
 
     const ACTION1_toggleCoop = () => ACTION1 = (ACTION1 === true ? null : true)
@@ -152,9 +153,9 @@
 
     // ### Role: ACTION2
 
-    // Same for the action state of the other player.
-    // To avoid `let`, an object could be created with methods, and specify them in the RoleObjectContract, 
-    // but let's keep things simple for now and see what happens.
+    // We'll do the same for the action state of the other player.
+    // To avoid `let`, a kind of domain object could be created, with state and methods handling the action, 
+    // then it can be bound to a Role only once with `const`. But let's keep things simple for now and see what happens.
     let ACTION2 : boolean | null = null
 
     const ACTION2_toggleCoop = () => ACTION2 = (ACTION2 === true ? null : true)
@@ -163,15 +164,16 @@
 
     // ### Role: MODALS
 
-    // Could this be a Role that handles modals? It certainly seems so, and it's quite simple -
+    // Could this be a Role that handles modal windows? It certainly seems so, and it's quite simple -
     // just an array of strings. With DCI, data objects are allowed to be simple, 
     // since *Data* (the objects playing a Role) and *Function* (RoleMethods inside a Context) have
     // different rate of change. The Data changes very infrequently compared to the fast-moving, 
     // featured-packed functionality of an app.
     const MODALS : string[] = []
 
-    // The contract for `MODALS` is simple since the CSS framework is using anchor tags to display modals.
-    // So now we can add functionality by interacting with the `WINDOW` Role.
+    // The contract for `MODALS`, a string array, is that simple since the CSS framework is using anchor tags to display modals.
+    // That means we can keep track of them using only the anchor - a string.
+    // Now we can add functionality by interacting with the `WINDOW` Role.
     const MODALS_open = (name = '') => {
         WINDOW_goto('#' + name)
 
@@ -195,11 +197,11 @@
 
     // ### The WINDOW Role
 
-    // The WINDOW Role is played by the browser window. The DCI-purist way would be to
+    // The `WINDOW` Role is played by the browser window. The DCI-purist way would be to
     // create a type with exactly what's needed to play the Role.
     //
-    // The most obvious advantage with that is that we're making the Role more generic.
-    // Any object fulfilling the contract type can now be a WINDOW, not just the browser, which
+    // Then, the most obvious advantage is that we're making the Role more generic.
+    // Any object fulfilling the contract type can now be a `WINDOW`, not just the browser, which
     // certainly would be useful if we're porting the app to another platform.
     //
     // Another interesting advantage is that we only observe what the Roles can do in the current Context. 
