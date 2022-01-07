@@ -4,14 +4,17 @@
     // If you like, open the [demo app](https://dilemma.surge.sh/) in a new tab to follow along. Source maps are included.
     //
     // A Svelte component can be considered a [DCI](https://en.wikipedia.org/wiki/Data,_context_and_interaction) Context,
-    // DCI being a very exciting programming paradigm. It describes a network of objects, cooperating to provide functionality 
+    // DCI being a very exciting programming paradigm. 
+    //
+    // It stands for *Data, Context, Interaction*, and describes a network of objects, interacting to provide functionality 
     // according to a mental model, in a clear, readable way.
     //
-    // A useful analogy for a Context is a theater play, so it will be used throughout this example to explain the DCI concepts.
+    // A useful analogy for a DCI Context is a theater play, so it will be used throughout this example to explain the concepts.
 
     // # Imports
 
-    // First, import types and components. Nothing directly DCI-related.
+    // First, import types and components. Nothing directly DCI-related, but some of these types will be used as *Data*, the
+    // first part of the DCI acronym. These are simple objects like Svelte stores and data structures.
     import type { Updater } from 'svelte/store';
     import type { Choice, Rounds, Rules } from './lib/types';
 
@@ -26,14 +29,10 @@
 
     // # Roles
 
-    // Just like a character in a theater play, a **Role** is 
-    // a character in a **Context**, played by an object.
+    // Just like a character in a theater play, a **Role** is a character in a **Context**, played by an object.
     //
-    // The Role itself is an identifier with a type (called
-    // **RoleObjectContract** or **contract**) that determines what objects can play this particular Role.
-    //
-    // Role naming should be made according to the mental model
-    // of the users, domain experts and other people related to the project.
+    // The Role itself is an identifier with a type (called **RoleObjectContract** or **contract**) 
+    // that determines what objects can play this particular Role.
     //
     // The naming of Roles is convention-based. It is UPPERCASE for this project, to easily distinguish 
     // between Roles and ordinary variables when reading the code.
@@ -41,23 +40,24 @@
     // ### The 'RULES' Role
 
     // A Role is defined by adding a variable followed by a type, that determines what objects can play this role.
-    // Here we define a Role called `RULES`.
+    // Here we define a Role called `RULES`, containing the rules of the game.
     const RULES : {
         // To play the `RULES` Role, we specify that an object needs a method called `update` that takes an `Updater<Rules>`:
         update: (this : void, updater: Updater<Rules>) => void
-    // Lastly is the assignment of the object playing the Role, the **RolePlayer**, is made. 
+    // Lastly the assignment of the object playing the Role, the **RolePlayer**, is made.
     // This is called **Role-binding** and should only be done once in the Context, as we will see later. `const` is very useful
     // for enforcing this.
     } = rules 
 
     // ## RoleMethods
     // The interaction between objects in the `Context` is done through **RoleMethods**, which are basically 
-    // methods related to a Role within a Context (never outside it). 
+    // methods related to a specific Role within a Context, never outside.
     //
-    // A RoleMethod should be considered a methods attached to an object when the object is playing its Role inside a Context. 
+    // RoleMethods should be considered like methods attached to an object whit it's playing a Role inside a Context.
     // This is similar to Neo plugging into the Matrix, suddenly being very versatile.
     //
-    // The RoleMethods for a Role should be placed directly below its Role, to keep things local and easy to overview.
+    // Code-wise, since there is no `context` declaration like a `class` in typescript or javascript, 
+    // the RoleMethods for a Role should be placed directly below its Role, to keep a sense of them belonging to their respective Role.
     //
     // The name of a RoleMethod is also convention-based, in this case we're using `ROLE_methodName`.
 
@@ -69,21 +69,22 @@
         //
         // A very important rule is that **only the Role's own RoleMethods can call its RoleObjectContract!**
         // This restriction is very useful since it prevents other Roles from tampering directly with another RolePlayer. 
-        // In the theater analogy, it would be like an actor suddenly being out of character.
+        // In the theater analogy, that would be like an actor suddenly being out of character.
         RULES.update(r => {
             r[e.detail.field] = e.detail.value
             return r
         })
     }
 
-    // Here is the definition of a RoleMethod for the `RULES` Role called `calcScore`.
-    // It seems to calculate scores based on a player and an opponent.
-    // Just by contextualizing a methods, connecting it to a Role, makes the code easier
-    // to understand. And there are more advantages...
-    const RULES_calcScore = (player : Choice, opponent : Choice) => {
+    // Here is the next definition of a RoleMethod for the `RULES` Role, called `calculateScore`.
+    // At a glance, it seems to calculate scores based on a player and an opponent.
+    // Contextualizing a method like this, connecting it to a Role, makes the code easier
+    // to understand, and expresses the mental model of this part of the system very well.
+    // It also helps when "rewiring" the Context, when (not if) functionality changes.
+    const RULES_calculateScore = (player : Choice, opponent : Choice) => {
         // ### Data access
 
-        // We refer directly to a Svelte store here. In general this is not best DCI practice,
+        // In `calculateScore`, we refer directly to a Svelte store. In general this is not best DCI practice,
         // since Roles should only communicate through their RoleMethods, but since it is
         // a Svelte standard to refer to store data like this, and also given that the accessed 
         // data is immutable, it's ok to do it.
@@ -98,7 +99,7 @@
     //
     // This is basically describing runtime system behavior, through a network of interacting objects.
     // We can follow the message flow inside the Context, understanding how the objects are
-    // cooperating to further the purpose of the Context. No patterns, inheritance or any engineering
+    // cooperating to further the purpose of the Context. No patterns, inheritance or any other engineering
     // structures obstructing what's really going on in the system.
     //
     // In the theater analogy, this would be like an actor reading a line from the script, 
@@ -113,7 +114,7 @@
     // Next Role is called `ROUNDS`, keeping track of the number of rounds in the game.
     //
     // It has almost the same contract as the `RULES` role. This hints that there
-    // should be a general type of object that can play these two Roles - a Svelte store in this case.
+    // should be a generic type of object that can play these two Roles - a Svelte store in this case.
     //
     // It's very convenient to add functionality to the Svelte store like this, without having to
     // extend or subclass it in any way. Things are kept where they should be, in Context.
@@ -152,8 +153,8 @@
     // ### Role: ACTION2
 
     // Same for the action state of the other player.
-    // To avoid `let`, an object could be created with methods, and specify them in the RoleObjectContract,
-    // but let's keep things simple for now.
+    // To avoid `let`, an object could be created with methods, and specify them in the RoleObjectContract, 
+    // but let's keep things simple for now and see what happens.
     let ACTION2 : boolean | null = null
 
     const ACTION2_toggleCoop = () => ACTION2 = (ACTION2 === true ? null : true)
@@ -169,7 +170,7 @@
     // featured-packed functionality of an app.
     const MODALS : string[] = []
 
-    // The contract is simple since the CSS framework is using anchor tags to display modals.
+    // The contract for `MODALS` is simple since the CSS framework is using anchor tags to display modals.
     // So now we can add functionality by interacting with the `WINDOW` Role.
     const MODALS_open = (name = '') => {
         WINDOW_goto('#' + name)
@@ -197,9 +198,9 @@
     // The WINDOW Role is played by the browser window. The DCI-purist way would be to
     // create a type with exactly what's needed to play the Role.
     //
-    // The most obvious advantage is that we're making the Role more generic. 
+    // The most obvious advantage with that is that we're making the Role more generic.
     // Any object fulfilling the contract type can now be a WINDOW, not just the browser, which
-    // certainly is useful if porting the app to another platform.
+    // certainly would be useful if we're porting the app to another platform.
     //
     // Another interesting advantage is that we only observe what the Roles can do in the current Context. 
     // This is called "Full OO", a powerful concept that you can 
@@ -214,7 +215,7 @@
     //
     // The `WINDOW` RoleMethods can be studied if you want to know more about the exact functionality, but in general,
     // looking at the names should be enough to understand what will happen. Naming is important, of course, and when
-    // cooperating with users and domain experts, a terminology should emerge that should be reflected in the RoleMethod names.
+    // discussing with users and domain experts, a terminology should emerge that should be reflected in the Roles and RoleMethod names.
     const WINDOW = window
 
     const WINDOW_goto = (url : string) =>
@@ -223,7 +224,7 @@
     const WINDOW_removeHash = () => 
         history.replaceState({}, WINDOW.document.title, ".")
 
-    const WINDOW_keyup = (e : KeyboardEvent) => {
+    const WINDOW_checkKeyboardShortcuts = (e : KeyboardEvent) => {
         const target = e.target as HTMLElement
         const isInput = !!(target?.tagName.toUpperCase() == 'INPUT')
 
@@ -244,23 +245,24 @@
         }
     }
 
-    // ## Some declarations
+    // ## Some final declarations
 
     // The Roles are done! Usually, there are some loose ends to tie up. For example,
     // we want to calculate and display the player scores based upon the rules. The app is simple enough
-    // for there to be no `Player´ object, so this is a perfect match for a few Svelte declarations.
-    $: player1score = $rounds.reduce((score, round) => score + RULES_calcScore(round[0], round[1]), 0)
-    $: player2score = $rounds.reduce((score, round) => score + RULES_calcScore(round[1], round[0]), 0)
+    // for there to be no `Player´ object, so this is a perfect place for a few Svelte declarations.
+    $: player1score = $rounds.reduce((score, round) => score + RULES_calculateScore(round[0], round[1]), 0)
+    $: player2score = $rounds.reduce((score, round) => score + RULES_calculateScore(round[1], round[0]), 0)
 
     // Another thing we want to do is to add a new round when both player actions are specified.
-    // This could be done in the `ACTION1` and `ACTION2` RoleMethods, since they manage changes of them,
-    // but hey, this is Svelte. We can separate this with a declaration, but beware...
+    // This check could be done in the `ACTION1` and `ACTION2` RoleMethods,
+    // but hey, this is Svelte. We can make it simpler with a declaration, but beware...
     $: {
-        // By comparing Roles with something, we are actually accessing the RolePlayers! 
-        // This is not allowed, if you remember the out of character problem. 
-        // It opens up for all sorts of issues. So we could very well be bitten by basically laziness in the future.
+        // By comparing Roles with something, we are directly accessing the RolePlayers!
+        // This is not allowed, if you remember the out of character problem, opening up for all sorts of issues. 
+        // So we could very well be bitten by basically laziness in the future.
+        //
         // However, it's a perfect way of getting into DCI, so if you've read this far and want to dig in,
-        // clone [the repo](https://github.com/ciscoheat/dilemma) and make an attempt! 
+        // clone [the repo](https://github.com/ciscoheat/dilemma) and make an attempt to fix those Roles!
         // Open an issue if you have any questions.
         if(ACTION1 !== null && ACTION2 !== null) {            
             const a1 = ACTION1
@@ -282,12 +284,13 @@
     // - [FAQ](http://fulloo.info/doku.php?id=faq)
     // - [Discussion group](https://groups.google.com/forum/?fromgroups#!forum/object-composition)
     // - [Wikipedia](http://en.wikipedia.org/wiki/Data,_Context,_and_Interaction)
+    // - Tutorials in other languages: [Haxe](https://github.com/ciscoheat/haxedci) and [PHP](https://github.com/ciscoheat/dcisniffer#dci-tutorial).
 
 </script>
 
 <!----- HTML --------------------------------------------->
 
-<svelte:window on:keyup={WINDOW_keyup}/>
+<svelte:window on:keyup={WINDOW_checkKeyboardShortcuts}/>
 
 <div class="u-flex u-justify-center">
     <div class="grid">

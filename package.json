@@ -3,18 +3,20 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "rollup -c",
+    "build": "npm-run-all build:*",
+    "build:app": "rollup -c",
+    "build:docs": "docco -o \"public/docs\" src/App.svelte",
     "dev": "rollup -c -w",
     "start": "sirv public --no-clear",
     "check": "svelte-check --tsconfig ./tsconfig.json",
-    "deploy": "surge public dilemma.surge.sh",
-    "docs": "docco -o \"public/docs\" src/App.svelte"
+    "deploy": "surge public dilemma.surge.sh"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^17.0.0",
     "@rollup/plugin-node-resolve": "^11.0.0",
     "@rollup/plugin-typescript": "^8.0.0",
     "@tsconfig/svelte": "^2.0.0",
+    "npm-run-all": "^4.1.5",
     "rollup": "^2.3.4",
     "rollup-plugin-css-only": "^3.1.0",
     "rollup-plugin-livereload": "^2.0.0",
