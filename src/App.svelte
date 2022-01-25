@@ -81,10 +81,7 @@
     }
 
     const RULES_reset = () => {
-        update(draft => ({
-            ...draft,
-            rules: newState().rules
-        }))
+        update(draft => draft.rules = newState().rules)
         MODALS_closeCurrent()
     }
 
