@@ -1,15 +1,3 @@
-// # DCI with Svelte
-//
-// If you like, open the [demo app](https://dilemma.surge.sh/) in a new tab to follow along. Source maps are included.
-//
-// A Svelte component can be considered a [DCI](https://en.wikipedia.org/wiki/Data,_context_and_interaction) Context,
-// DCI being a very exciting programming paradigm. 
-//
-// It stands for *Data, Context, Interaction*, and describes a network of objects, interacting to provide functionality 
-// according to a mental model, in a clear, readable way.
-//
-// A useful analogy for a DCI Context is a theater play, so it will be used throughout this example to explain the concepts.
-
 export type Choice = boolean
 export type Round = FixedLengthArray<2, Choice>
 export type Rounds = Round[]

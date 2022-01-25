@@ -10,7 +10,7 @@ export interface AppState {
 const appState = () => ({
     rounds: gameState.rounds,
     rules: gameState.rules,
-    players: ['', ''] as const
+    players: ['Player 1', 'Player 2'] as const
 }) as const
 
 export class AppStorage extends LocalStorage<AppState> {
