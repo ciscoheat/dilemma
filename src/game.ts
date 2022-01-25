@@ -10,61 +10,86 @@
 //
 // A useful analogy for a DCI Context is a theater play, so it will be used throughout this example to explain the concepts.
 
-// # Imports
-
-// First, import types and components. Nothing directly DCI-related, but some of these objects will be used as *Data*, the
-// first part of the DCI acronym. These are simple objects like Svelte stores and data structures.
-//import { derived, Writable, writable, get } from 'svelte/store';
-//import type { Updater } from 'svelte/store';
-
 export type Choice = boolean
-export type Round = Readonly<FixedLengthArray<2, Choice>>
-export type Rounds = Readonly<Round[]>
+export type Round = FixedLengthArray<2, Choice>
+export type Rounds = Round[]
 
 ///////////////////////////////////////////////////////////
 
-// # Data
+export interface GameState {
+    readonly rounds: Readonly<Rounds>
+    readonly rules: { 
+        readonly coop: number
+        readonly defect: number
+        readonly win: number 
+        readonly lose: number
+    }
+}
 
 export const initialState = {
-    rounds: [] as Rounds,
+    rounds: [] as const,
     rules: {
         coop: 2,
         defect: 0,
         win: 3,
         lose: -1
     } as const
-}
-
-export type Rules = typeof initialState.rules
+} as GameState
 
 ///////////////////////////////////////////////////////////
 
 export class Game {
-    public readonly rules: Rules
-    public readonly rounds: Rounds
-
     constructor(data = initialState) {
-        this.rules = data.rules
-        this.rounds = data.rounds
+        this.RULES = data.rules
+        this.ROUNDS = data.rounds
     }
 
+    /**
+     * The current score for the game, in the format [p1, p2].
+     */
     public get score() {
-        return this.rounds.reduce((scores, round) => [
-            scores[0] + this.calculateScore(round[0], round[1]),
-            scores[1] + this.calculateScore(round[1], round[0])
-        ] as const, [0,0] as const)
+        return this.ROUNDS_score()
     }
 
-    public addRound = (action1: Choice, action2: Choice) => {
-        return [...this.rounds, [action1, action2] as const]
+    /**
+     * @param action1 true for cooperate, false for cheat/defect.
+     * @param action2 true for cooperate, false for cheat/defect.
+     * @returns an array with a new round appended.
+     */
+    public newRound(action1: Choice, action2: Choice) {
+        return this.ROUNDS_add(action1, action2)
+    }
+    
+    ///// Roles ///////////////////////////////////////////
+    
+    private readonly RULES: { 
+        readonly coop: number
+        readonly defect: number
+        readonly win: number 
+        readonly lose: number
     }
 
-    private calculateScore = (player: Choice, opponent: Choice) => {
-        const r = this.rules
+    protected RULES_score(player: Choice, opponent: Choice) {
+        const r = this.RULES
 
         if(player == opponent)
             return player ? r.coop : r.defect
         else
             return player ? r.lose : r.win
+    }
+
+    ///////////////////////////////////////////////////////
+
+    private readonly ROUNDS: Readonly<Rounds>
+
+    protected ROUNDS_score() : FixedLengthArray<2, number> {
+        return this.ROUNDS.reduce((scores, round) => [
+            scores[0] + this.RULES_score(round[0], round[1]),
+            scores[1] + this.RULES_score(round[1], round[0])
+        ] as const, [0,0] as const)
+    }
+
+    protected ROUNDS_add(action1: Choice, action2: Choice) : Rounds {
+        return [...this.ROUNDS, [action1, action2] as const]
     }
 }

@@ -26,7 +26,8 @@
     import Modal from './lib/Modal.svelte';
 
     import { produce } from 'immer'
-    import { AppStorage, newState } from './lib/appStorage';
+    import { AppState, AppStorage } from './lib/appStorage';
+    import type { WritableDraft } from 'immer/dist/internal';
 
     // Hack to get immer.js working
     // https://github.com/immerjs/immer/issues/557
@@ -53,18 +54,20 @@
     ///////////////////////////////////////////////////////
    
     let GAME : {        
-        addRound: (action1: Choice, action2: Choice) => Rounds
+        newRound: (action1: Choice, action2: Choice) => Rounds
         score: FixedLengthArray<2, number>
     }    
 
     const GAME_addRound = (action1: Choice, action2: Choice) => {
-        update(state => state.rounds = GAME.addRound(action1, action2))
+        update(state => {
+            state.rounds = GAME.newRound(action1, action2)
+        })
         ACTION1_reset()
         ACTION2_reset()
     }
 
     const GAME_restart = (_ = null) => {
-        update(state => state.rounds = [])
+        update(state => state.rounds = storage.initial().rounds as WritableDraft<Rounds>)
         ACTION1_reset()
         ACTION2_reset()
         MODALS_closeAll()
@@ -72,16 +75,19 @@
 
     ///////////////////////////////////////////////////////
 
-    let RULES: { coop: any; defect: any; win: any; lose: any; }
+    let RULES: { 
+        coop: number; defect: number; 
+        win: number; lose: number; 
+    }
 
-    const RULES_update = (e : CustomEvent<{field : string, value : number}>) => {
-        update(draft => {
-            draft.rules[e.detail.field] = e.detail.value
+    const RULES_update = (e : CustomEvent<{field : "coop" | "defect" | "win" | "lose", value : number}>) => {
+        update(state => {
+            state.rules[e.detail.field] = e.detail.value
         })
     }
 
     const RULES_reset = () => {
-        update(draft => draft.rules = newState().rules)
+        update(state => state.rules = storage.initial().rules)
         MODALS_closeCurrent()
     }
 
@@ -193,6 +199,18 @@
         else if(e.code == "Escape") {
             MODALS_closeCurrent()
         }
+        else if(e.code == "Enter") {
+            const p1 = document.querySelector('input.player1') as HTMLInputElement
+            const p2 = document.querySelector('input.player2') as HTMLInputElement
+
+            if(document.activeElement == p1) {
+                p2.focus()
+                p2.select()
+            }
+            else if(document.activeElement == p2) {
+                p2.blur()
+            }
+        }
     }
 
     ///// State and binding ///////////////////////////////
@@ -201,9 +219,9 @@
 
     let _state = storage.load('dilemma')
 
-    const update = (change : (state : typeof _state) => void) => {
-        _state = produce(_state, next => {
-            change(next)
+    const update = (newState : (prev : WritableDraft<AppState>) => any) => {
+        _state = produce(_state, (prev) => {
+            newState(prev)
         })
 
         storage.save('dilemma', _state)
@@ -212,13 +230,17 @@
 
     const rebind = (state : typeof _state) => {
         try {
-            GAME = new Game(state)
-            RULES = state.rules
             PLAYER1 = state.players[0]
             PLAYER2 = state.players[1]
             ROUNDS = state.rounds
+            GAME = new Game(state)
+            RULES = state.rules
+            ACTION1 = ACTION1
+            ACTION2 = ACTION2
+            //MODALS = MODALS
+            //WINDOW = WINDOW
         } catch(error) {
-            rebind(newState())
+            rebind(storage.initial())
         }
     }
 
@@ -268,14 +290,14 @@
 <div class="u-flex u-justify-center">
     <div class="grid">
         <div class="grid-c-12 u-text-center">
-            <h2 class="my-1">Round {ROUNDS.length}</h2>
+            <h2 class="my-1">Round {ROUNDS.length+1}</h2>
         </div>
         <div class="grid-c-5">
-            <Player bind:name={PLAYER1} update={PLAYER1_updateName} score={GAME.score[0]} state={ACTION1} coop={ACTION1_toggleCoop} cheat={ACTION1_toggleCheat}></Player>
+            <Player bind:name={PLAYER1} nr={1} update={PLAYER1_updateName} score={GAME.score[0]} state={ACTION1} coop={ACTION1_toggleCoop} cheat={ACTION1_toggleCheat}></Player>
         </div>
         <div class="grid-c-2"></div>
         <div class="grid-c-5">
-            <Player bind:name={PLAYER2} update={PLAYER2_updateName} score={GAME.score[1]} state={ACTION2} coop={ACTION2_toggleCoop} cheat={ACTION2_toggleCheat}></Player>
+            <Player bind:name={PLAYER2} nr={2} update={PLAYER2_updateName} score={GAME.score[1]} state={ACTION2} coop={ACTION2_toggleCoop} cheat={ACTION2_toggleCheat}></Player>
         </div>
         <div class="options grid-c-12 u-flex u-justify-center mt-4">
             <ModalOpen name={"restart"} opener={MODALS_open}>
@@ -294,56 +316,50 @@
 <!----- Modals ------------------------------------------->
 
 <Modal name={"rules"} close={MODALS_closeCurrent}>
-    <div class="modal-content" role="document">
-        <div class="modal-header">
-            <div class="modal-title u-flex u-justify-space-between">
-                <div class="mr-3">Rules</div>
-                <ModalClose closer={MODALS_closeCurrent}>
-                    <span class="icon">
-                        <i class="fa-wrapper fa fa-times"></i>
-                    </span>
-                </ModalClose>
-            </div>
+    <div class="modal-header">
+        <div class="modal-title u-flex u-justify-space-between">
+            <div class="mr-3">Rules</div>
+            <ModalClose closer={MODALS_closeCurrent}>
+                <span class="icon">
+                    <i class="fa-wrapper fa fa-times"></i>
+                </span>
+            </ModalClose>
         </div>
-        <div class="modal-body">
-            <table class="table mb-0">
-                <tbody>
-                    <Scorefield on:input={RULES_update} field={"coop"} title={"Cooperate score"} actions={[true, true]} points={RULES.coop}></Scorefield>
-                    <Scorefield on:input={RULES_update} field={"defect"} title={"Defect score"} actions={[false, false]} points={RULES.defect}></Scorefield>
-                    <Scorefield on:input={RULES_update} field={"win"} title={"Win score"} actions={[false, true]} points={RULES.win}></Scorefield>
-                    <Scorefield on:input={RULES_update} field={"lose"} title={"Lose score"} actions={[true, false]} points={RULES.lose}></Scorefield>
-                </tbody>
-            </table>
-            <ModalOpen name={"reset"} opener={MODALS_open}>
-                <div class="btn outline btn-danger mt-2">Reset rules</div>
-            </ModalOpen>
-            <div class="help faded u-text-center">
-                <p>Use keyboard 1,2 keys to click buttons.</p>
-                <p>
-                    <a target="_blank" href="https://en.wikipedia.org/wiki/Prisoner%27s_dilemma">What is the Prisoner's dilemma?</a>
-                </p>
-            </div>
+    </div>
+    <div class="modal-body">
+        <table class="table mb-0">
+            <tbody>
+                <Scorefield on:input={RULES_update} field={"coop"} title={"Cooperate score"} actions={[true, true]} points={RULES.coop}></Scorefield>
+                <Scorefield on:input={RULES_update} field={"defect"} title={"Defect score"} actions={[false, false]} points={RULES.defect}></Scorefield>
+                <Scorefield on:input={RULES_update} field={"win"} title={"Win score"} actions={[false, true]} points={RULES.win}></Scorefield>
+                <Scorefield on:input={RULES_update} field={"lose"} title={"Lose score"} actions={[true, false]} points={RULES.lose}></Scorefield>
+            </tbody>
+        </table>
+        <ModalOpen name={"reset"} opener={MODALS_open}>
+            <div class="btn outline btn-danger mt-2">Reset rules</div>
+        </ModalOpen>
+        <div class="help faded u-text-center">
+            <p>Use keyboard 1,2 keys to click buttons.</p>
+            <p>
+                <a target="_blank" href="https://en.wikipedia.org/wiki/Prisoner%27s_dilemma">What is the Prisoner's dilemma?</a>
+            </p>
         </div>
     </div>
 </Modal>
 
 <Modal name={"restart"} close={MODALS_closeCurrent}>
-    <div class="modal-content" role="document">
-        <div class="modal-body">
-            <h5 class="mb-3">Restart game?</h5>
-            <div class="btn btn-danger" on:click={GAME_restart}>Yes</div>
-            <div class="btn btn-plain" on:click={MODALS_closeCurrent}>No</div>
-        </div>
+    <div class="modal-body">
+        <h5 class="mb-3">Restart game?</h5>
+        <div class="btn btn-danger" on:click={GAME_restart}>Yes</div>
+        <div class="btn btn-plain" on:click={MODALS_closeCurrent}>No</div>
     </div>
 </Modal>
 
 <Modal name={"reset"} close={MODALS_closeCurrent}>
-    <div class="modal-content" role="document">
-        <div class="modal-body">
-            <h5 class="mb-3">Reset rules?</h5>
-            <div class="btn btn-danger" on:click={() => RULES_reset()}>Yes</div>
-            <div class="btn btn-plain" on:click={MODALS_closeCurrent}>No</div>
-        </div>
+    <div class="modal-body">
+        <h5 class="mb-3">Reset rules?</h5>
+        <div class="btn btn-danger" on:click={() => RULES_reset()}>Yes</div>
+        <div class="btn btn-plain" on:click={MODALS_closeCurrent}>No</div>
     </div>
 </Modal>
 

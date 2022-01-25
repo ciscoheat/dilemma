@@ -4,7 +4,9 @@
 </script>
 
 <div class="modal modal-animated--zoom-in" id={name} on:click|self={() => close(name)}>
-    <slot></slot>
+    <div class="modal-content" role="document">
+        <slot></slot>
+    </div>
 </div>
 
 <style lang="scss">

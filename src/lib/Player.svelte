@@ -1,4 +1,5 @@
 <script lang="ts">
+    export let nr : 1 | 2
 	export let name = ''
     export let score = 0
     export let state = null
@@ -7,7 +8,13 @@
     export let cheat : () => void
 </script>
 
-<input type="name" on:input={e => update(e.currentTarget.value)} value={name} class="u-text-center input-large">
+<input 
+    class:player1={nr==1} class:player2={nr==2} 
+    class="u-text-center input-large"
+    type="text" value={name} 
+    on:input={e => update(e.currentTarget.value)}
+    on:click={e => e.currentTarget.select()}
+>
 <div class="card score my-2 px-3" style="margin:0 auto; width:max-content;">
     <div class="content u-center">
         <h1>{score}</h1>

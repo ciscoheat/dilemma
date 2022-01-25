@@ -28,11 +28,11 @@ class MapStorage<T extends object> extends Storage<string, T> {
     public store : Map<string, T>
 
     public setIntegrityThrow(state : boolean) {
-        this.throwOnIntegrityError = state
+        this.configuration.throwOnIntegrityError = state
     }
 
     public setUpgradeThrow(state : boolean) {
-        this.throwOnUpgradeError = state
+        this.configuration.throwOnUpgradeError = state
     }
 
     public storageKey() {

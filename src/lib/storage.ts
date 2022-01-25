@@ -32,8 +32,10 @@ export abstract class Storage<K, T extends object> {
     protected abstract _load(key : K) : any
     protected abstract _save(key : K, value : T) : void
 
-    protected throwOnIntegrityError = true
-    protected throwOnUpgradeError = true
+    protected configuration = {
+        throwOnIntegrityError: true,
+        throwOnUpgradeError: true
+    }
 
     constructor(initial : () => T, versions : Versions = new Map()) {
         this._initial = initial
@@ -44,11 +46,6 @@ export abstract class Storage<K, T extends object> {
         }, 1)
         this.integrity = this.createIntegrity(initial())
         //console.dir(this.integrity)
-    }
-
-    private initial() : T {
-        //console.log('Creating initial object.')
-        return this._initial()
     }
 
     private isObject(x : any) { return x && typeof x === 'object' && !Array.isArray(x) }
@@ -75,29 +72,6 @@ export abstract class Storage<K, T extends object> {
         }
     }
 
-    public load(key : K) : T {
-        let obj = this.upgrade(this._load(key))
-        try {
-            this.checkIntegrity(obj)
-        } catch(e) {
-            if(e instanceof IntegrityError && !this.throwOnIntegrityError)
-                return this.initial()
-            else
-                throw e
-        }
-        return obj as T
-    }
-
-    public save(key : K, value : T) {
-        const obj = Object.isFrozen(value)
-            ? Object.assign({}, value)
-            : value
-
-        obj[this.versionProperty] = this.currentVersion
-        this._save(key, obj)
-        //console.log('Saved', value)
-    }
-
     private upgrade(obj : Dirty) : Dirty {
         try {
             if(obj == null || !obj[this.versionProperty])
@@ -105,7 +79,7 @@ export abstract class Storage<K, T extends object> {
 
             let objVersion = obj[this.versionProperty]
             
-            if(objVersion == this.currentVersion)
+            if(objVersion === this.currentVersion)
                 return obj
 
             if(!Number.isInteger(objVersion))
@@ -128,12 +102,45 @@ export abstract class Storage<K, T extends object> {
                 throw new UpgradeError("Upgrade to version " + objVersion + " failed", obj)
             }
         } catch(e) {
-            if(e instanceof UpgradeError && !this.throwOnUpgradeError)
+            if(e instanceof UpgradeError && !this.configuration.throwOnUpgradeError)
                 return this.initial()
             else
                 throw e
         }
+    }
 
+    ///// Public API //////////////////////////////////////
+
+    public load(key : K) : T {
+        let obj = this.upgrade(this._load(key))
+        try {
+            this.checkIntegrity(obj)
+        } catch(e) {
+            if(e instanceof IntegrityError && !this.configuration.throwOnIntegrityError)
+                return this.initial()
+            else
+                throw e
+        }
+        return obj as T
+    }
+
+    public save(key : K, value : T) {
+        const obj = Object.isFrozen(value)
+            ? Object.assign({}, value)
+            : value
+
+        obj[this.versionProperty] = this.currentVersion
+        this._save(key, obj)
+        //console.log('Saved', value)
+    }
+
+    /**
+     * When you want to use the default values of a state.
+     * @returns a new state object.
+     */
+    public initial() : T {
+        //console.log('Creating initial object.')
+        return this._initial()
     }
 }
 
