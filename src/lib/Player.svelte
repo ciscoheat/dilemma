@@ -1,12 +1,13 @@
-<script>
+<script lang="ts">
 	export let name = ''
     export let score = 0
     export let state = null
-    export let coop
-    export let cheat
+    export let update : (name: string) => void
+    export let coop : () => void
+    export let cheat : () => void
 </script>
 
-<input type="name" bind:value={name} class="u-text-center input-large">
+<input type="name" on:input={e => update(e.currentTarget.value)} value={name} class="u-text-center input-large">
 <div class="card score my-2 px-3" style="margin:0 auto; width:max-content;">
     <div class="content u-center">
         <h1>{score}</h1>

@@ -1,9 +1,9 @@
 <script type="ts">
-    export let name
-    export let closer
+    export let name : string
+    export let close : (name : string) => void
 </script>
 
-<div class="modal modal-animated--zoom-in" id={name} on:click|self={closer}>
+<div class="modal modal-animated--zoom-in" id={name} on:click|self={() => close(name)}>
     <slot></slot>
 </div>
 
