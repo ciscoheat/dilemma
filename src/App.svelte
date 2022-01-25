@@ -56,7 +56,9 @@
     let GAME : {        
         newRound: (action1: Choice, action2: Choice) => Rounds
         score: FixedLengthArray<2, number>
-    }    
+    }
+    
+    const GAME_isOver = () => gameOver
 
     const GAME_addRound = (action1: Choice, action2: Choice) => {
         update(state => {
@@ -101,8 +103,14 @@
     // this is unfortunately needed, since it will mutate. Be extra careful that only the RoleMethods of the Role are changing it!
     let ACTION1 : boolean | null = null
 
-    const ACTION1_toggleCoop = () => ACTION1 = (ACTION1 === true ? null : true)
-    const ACTION1_toggleCheat = () => ACTION1 = (ACTION1 === false ? null : false)
+    const ACTION1_toggleCoop = () => {
+        if(GAME_isOver()) return
+        ACTION1 = (ACTION1 === true ? null : true)
+    }
+    const ACTION1_toggleCheat = () => {
+        if(GAME_isOver()) return
+        ACTION1 = (ACTION1 === false ? null : false)
+    }
     const ACTION1_reset = () => ACTION1 = null
 
     // ### Role: ACTION2
@@ -112,9 +120,19 @@
     // then it can be bound to a Role only once with `const`. But let's keep things simple for now and see what happens.
     let ACTION2 : boolean | null = null
 
-    const ACTION2_toggleCoop = () => ACTION2 = (ACTION2 === true ? null : true)
-    const ACTION2_toggleCheat = () => ACTION2 = (ACTION2 === false ? null : false)
+    const ACTION2_toggleCoop = () => {
+        if(GAME_isOver()) return
+        ACTION2 = (ACTION2 === true ? null : true)
+    }
+    const ACTION2_toggleCheat = () => {
+        if(GAME_isOver()) return
+        ACTION2 = (ACTION2 === false ? null : false)
+    }
     const ACTION2_reset = () => ACTION2 = null
+
+    // ### Role: MATCHROUNDS
+
+    let MATCHROUNDS = 10
 
     // ### Role: MODALS
 
@@ -266,6 +284,10 @@
         }
     }
 
+    $: gameOver = ROUNDS.length >= MATCHROUNDS
+    $: p1won = gameOver ? GAME.score[0] >= GAME.score[1] : null
+    $: p2won = gameOver ? GAME.score[1] >= GAME.score[0] : null
+
     // ## DCI resources
 
     // The rest of the component should be pretty much self-explanatory if you've done the [Svelte tutorial](https://svelte.dev/tutorial/basics).
@@ -290,14 +312,25 @@
 <div class="u-flex u-justify-center">
     <div class="grid">
         <div class="grid-c-12 u-text-center">
-            <h2 class="my-1">Round {ROUNDS.length+1}</h2>
+            {#if !gameOver}
+                <h2 class="my-1">
+                    <div>Round {ROUNDS.length+1} /</div>
+                    {#if ROUNDS.length == 0}
+                        <input bind:value={MATCHROUNDS} type="number" min="1" class="u-inline">
+                    {:else}
+                        <div>{MATCHROUNDS}</div>
+                    {/if}
+                </h2>
+            {:else}
+                <h2 class="my-1">Game over!</h2>
+            {/if}
         </div>
         <div class="grid-c-5">
-            <Player bind:name={PLAYER1} nr={1} update={PLAYER1_updateName} score={GAME.score[0]} state={ACTION1} coop={ACTION1_toggleCoop} cheat={ACTION1_toggleCheat}></Player>
+            <Player bind:name={PLAYER1} nr={1} update={PLAYER1_updateName} score={GAME.score[0]} won={p1won} state={ACTION1} coop={ACTION1_toggleCoop} cheat={ACTION1_toggleCheat}></Player>
         </div>
         <div class="grid-c-2"></div>
         <div class="grid-c-5">
-            <Player bind:name={PLAYER2} nr={2} update={PLAYER2_updateName} score={GAME.score[1]} state={ACTION2} coop={ACTION2_toggleCoop} cheat={ACTION2_toggleCheat}></Player>
+            <Player bind:name={PLAYER2} nr={2} update={PLAYER2_updateName} score={GAME.score[1]} won={p2won} state={ACTION2} coop={ACTION2_toggleCoop} cheat={ACTION2_toggleCheat}></Player>
         </div>
         <div class="options grid-c-12 u-flex u-justify-center mt-4">
             <ModalOpen name={"restart"} opener={MODALS_open}>
@@ -374,6 +407,18 @@
         p {
             line-height: 1.33rem;
             margin-bottom: 0.5rem;
+        }
+    }
+
+    h2 {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+
+        input {
+            width: 80px !important;
+            font-size: 2rem !important;
+            padding: 0 10px !important;
         }
     }
 </style>

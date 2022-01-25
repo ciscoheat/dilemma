@@ -1,5 +1,6 @@
 <script lang="ts">
     export let nr : 1 | 2
+    export let won : boolean | null
 	export let name = ''
     export let score = 0
     export let state = null
@@ -15,7 +16,7 @@
     on:input={e => update(e.currentTarget.value)}
     on:click={e => e.currentTarget.select()}
 >
-<div class="card score my-2 px-3" style="margin:0 auto; width:max-content;">
+<div class:bg-green-100={won === true} class:bg-red-100={won === false} class="card score my-2 px-3" style="margin:0 auto; width:max-content;">
     <div class="content u-center">
         <h1>{score}</h1>
     </div>
