@@ -21,7 +21,7 @@ if (typeof window === 'object') {
 ///// Start app /////////////
 
 const app = new App({
-	target: document.getElementById('svelte')
+	target: document.getElementById('svelte') ?? document.body
 });
 
 export default app

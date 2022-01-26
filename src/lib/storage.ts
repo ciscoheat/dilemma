@@ -20,11 +20,13 @@ export class UpgradeError extends Error {
     }
 }
 
-export type Versions = Map<number, (prev: object) => object>
+export type Versions = {
+    [key: number]: (prev: object) => object
+}
 
 export abstract class Storage<K, T extends object> {
     private readonly currentVersion : number
-    private readonly versions : Versions
+    private readonly versions : Map<number, (prev: object) => object>
     private readonly integrity : Integrity
     private readonly _initial : () => T
     
@@ -34,13 +36,14 @@ export abstract class Storage<K, T extends object> {
 
     protected config = {
         throwOnIntegrityError: true,
-        throwOnUpgradeError: true
+        throwOnUpgradeError: true,
+        throwOnLoadError: true
     }
 
-    constructor(initial : () => T, versions : Versions = new Map()) {
+    constructor(initial : () => T, versions : Versions = {}) {
         this._initial = initial
-        this.versions = versions
-        this.currentVersion = Array.from(versions.keys()).reduce((prev, next) => {
+        this.versions = new Map(Object.entries(versions).map(e => [parseInt(e[0]), e[1]]))
+        this.currentVersion = Array.from(this.versions.keys()).reduce((prev, next) => {
             if(next < 2) throw new Error("Invalid version in Storage: Must be above 1.")
             return Math.max(prev, next)
         }, 1)
@@ -73,55 +76,52 @@ export abstract class Storage<K, T extends object> {
     }
 
     private upgrade(obj : Dirty) : Dirty {
+        if(obj == null || !obj[this.versionProperty])
+            throw new UpgradeError("Missing version field", obj)
+
+        let objVersion = obj[this.versionProperty]
+        
+        if(objVersion === this.currentVersion)
+            return obj
+
+        if(!Number.isInteger(objVersion))
+            throw new UpgradeError("Invalid version number", obj)
+
         try {
-            if(obj == null || !obj[this.versionProperty])
-                throw new UpgradeError("Missing version field", obj)
-
-            let objVersion = obj[this.versionProperty]
-            
-            if(objVersion === this.currentVersion)
-                return obj
-
-            if(!Number.isInteger(objVersion))
-                throw new UpgradeError("Invalid version number", obj)
-
-            try {
-                while(objVersion < this.currentVersion) {
-                    let next = this.versions.get(++objVersion)
-                    if(next) {
-                        obj = next(obj)
-                        //console.log("Object upgraded to version " + objVersion)
-                    }
+            while(objVersion < this.currentVersion) {
+                let next = this.versions.get(++objVersion)
+                if(next) {
+                    obj = next(obj)
+                    //console.log("Object upgraded to version " + objVersion)
                 }
-
-                if(!Object.isFrozen(obj))
-                    obj[this.versionProperty] = objVersion
-
-                return obj
-            } catch(e) {
-                throw new UpgradeError("Upgrade to version " + objVersion + " failed", obj)
             }
+
+            if(!Object.isFrozen(obj))
+                obj[this.versionProperty] = objVersion
+
+            return obj
         } catch(e) {
-            if(e instanceof UpgradeError && !this.config.throwOnUpgradeError)
-                return this.initial()
-            else
-                throw e
+            throw new UpgradeError("Upgrade to version " + objVersion + " failed", obj)
         }
     }
 
     ///// Public API //////////////////////////////////////
 
     public load(key : K) : T {
-        let obj = this.upgrade(this._load(key))
         try {
+            let obj = this.upgrade(this._load(key))
             this.checkIntegrity(obj)
+            return obj as T
         } catch(e) {
-            if(e instanceof IntegrityError && !this.config.throwOnIntegrityError)
+            if(e instanceof UpgradeError && !this.config.throwOnUpgradeError)
+                return this.initial()
+            else if(e instanceof IntegrityError && !this.config.throwOnIntegrityError)
+                return this.initial()
+            else if(!this.config.throwOnLoadError)
                 return this.initial()
             else
                 throw e
         }
-        return obj as T
     }
 
     public save(key : K, value : T) {
@@ -146,14 +146,14 @@ export abstract class Storage<K, T extends object> {
 
 export class LocalStorage<T extends object> extends Storage<string, T> {
     protected _load(key: string) {
-        return JSON.parse(window.localStorage.getItem(key))
+        return JSON.parse(window.localStorage.getItem(key) ?? "null")
     }
 
     protected _save(key: string, value : T): void {
         window.localStorage.setItem(key, JSON.stringify(value))
     }
 
-    constructor(initial : () => T, versions : Versions = new Map()) {
+    constructor(initial : () => T, versions : Versions = {}) {
         super(initial, versions)
     }
 }

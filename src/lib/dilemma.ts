@@ -1,7 +1,4 @@
-export enum Choice {
-    COOP = 1,
-    DEFECT = 0
-}
+export type Choice = "coop" | "defect"
 export type Round = Readonly<FixedLengthArray<2, Choice>>
 export type Rounds = Readonly<Round[]>
 
@@ -64,9 +61,9 @@ export class Dilemma {
         const r = this.RULES
 
         if(player == opponent)
-            return player ? r.coop : r.defect
+            return player == "coop" ? r.coop : r.defect
         else
-            return player ? r.lose : r.win
+            return player == "coop" ? r.lose : r.win
     }
 
     ///////////////////////////////////////////////////////

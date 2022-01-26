@@ -1,9 +1,11 @@
 <script lang="ts">
+    import type { Action } from "./App.svelte";
+
     export let nr : 1 | 2
     export let won : boolean | null
 	export let name = ''
     export let score = 0
-    export let state = null
+    export let state : Action
     export let update : (name: string) => void
     export let coop : () => void
     export let cheat : () => void
@@ -22,12 +24,12 @@
     </div>
 </div>
 <div class="u-flex u-justify-space-evenly">
-    <div class="btn" class:btn-success={state === true} on:click={e => coop()} title="Cooperate">
+    <div class="btn" class:btn-success={state === "coop"} on:click={() => coop()} title="Cooperate">
         <span class="icon subtitle" style="font-size: 28px">
             <i class="far fa-wrapper fa-thumbs-up"></i>
         </span>
     </div>
-    <div class="btn" class:btn-danger={state === false} on:click={e => cheat()} title="Cheat/defect">
+    <div class="btn" class:btn-danger={state === "defect"} on:click={() => cheat()} title="Cheat/defect">
         <span class="icon subtitle" style="font-size: 28px">
             <i class="far fa-wrapper fa-hand-rock"></i>
         </span>

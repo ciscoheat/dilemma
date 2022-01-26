@@ -47,7 +47,7 @@ class MapStorage<T extends object> extends Storage<string, T> {
         this.store.set(key, value)
     }
 
-    constructor(initial : () => T, contents = new Map(), versions = new Map()) {
+    constructor(initial : () => T, contents = new Map(), versions = {}) {
         super(initial, versions)
         this.store = contents
     }
@@ -57,11 +57,12 @@ class Storage1 extends MapStorage<typeof initialState> {}
 
 class Storage2 extends MapStorage<typeof initialState2> {
     constructor(initial, contents = new Map()) {
-        const versions = new Map()
-        versions.set(2, o => {
-            o['players'] = initialState2.players
-            return o
-        })
+        const versions = {
+            2: o => {
+                o['players'] = initialState2.players
+                return o
+            }
+        }
         super(initial, contents, versions)
     }
 }
@@ -92,7 +93,7 @@ describe("The Storage class", () => {
 
     describe('Integrity checking', () => {        
         it("should throw an exception if properties are missing", () => {
-            const badState = contents.get('first')
+            const badState = contents.get('first') as any
             delete badState['rounds']
             contents.set('first', badState)
             
@@ -100,7 +101,7 @@ describe("The Storage class", () => {
         })
 
         it("should not throw if throw flag is set to false", () => {
-            const badState = contents.get('first')
+            const badState = contents.get('first') as any
             delete badState['rounds']
             contents.set('first', badState)
             
@@ -111,7 +112,7 @@ describe("The Storage class", () => {
 
     describe('Upgrading', () => {        
         it("should throw an exception if no version field", () => {
-            const badState = contents.get('first')
+            const badState = contents.get('first') as any
             delete badState[storage1.storageKey()]
             contents.set('first', badState)
             
@@ -122,7 +123,7 @@ describe("The Storage class", () => {
         })
 
         it("should throw an exception if version field isn't an integer", () => {
-            const badState = contents.get('first')
+            const badState = contents.get('first') as any
             badState[storage1.storageKey()] = "a string"
             contents.set('first', badState)
             
@@ -133,7 +134,7 @@ describe("The Storage class", () => {
         })
 
         it("should upgrade an object if it has a lower version", () => {
-            const oldState = contents.get('first')
+            const oldState = contents.get('first') as any
             expect(oldState['players']).toBeUndefined()
 
             const contents2 = new Map(contents)

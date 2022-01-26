@@ -1,3 +1,7 @@
+<script lang="ts" context="module">
+    export type Action = "none" | Choice
+</script>
+
 <script lang="ts">
     // # DCI with Svelte
     //
@@ -48,7 +52,9 @@
 
     ///////////////////////////////////////////////////////
 
-    let ROUNDS : readonly Readonly<FixedLengthArray<2,Choice>>[]
+    let ROUNDS : {
+        length: number
+    }
 
     ///////////////////////////////////////////////////////
    
@@ -57,18 +63,13 @@
         score: FixedLengthArray<2, number>
     }
     
-    const GAME_isOver = () => gameOver
-
-    const GAME_addRound = (action1: boolean, action2: boolean) => {
-        update(state => state.rounds = castDraft(GAME.newRound(
-            action1 ? Choice.COOP : Choice.DEFECT, 
-            action2 ? Choice.COOP : Choice.DEFECT
-        )))
+    const GAME_addRound = (action1: Choice, action2: Choice) => {
+        update(state => state.rounds = castDraft(GAME.newRound(action1, action2)))
         ACTION1_reset()
         ACTION2_reset()
     }
 
-    const GAME_restart = (_ = null) => {
+    const GAME_restart = (_?) => {
         update(state => state.rounds = castDraft(storage.initial().rounds))
         ACTION1_reset()
         ACTION2_reset()
@@ -101,34 +102,34 @@
     // It is defined with `let` this time, not `const`. That's not best DCI practice, even frowned upon, 
     // but for [primitive types](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#the-primitives-string-number-and-boolean)
     // this is unfortunately needed, since it will mutate. Be extra careful that only the RoleMethods of the Role are changing it!
-    let ACTION1 : boolean | null = null
+    let ACTION1 : Action = "none"
 
     const ACTION1_toggleCoop = () => {
-        if(GAME_isOver()) return
-        ACTION1 = (ACTION1 === true ? null : true)
+        if(gameOver) return
+        ACTION1 = (ACTION1 === "coop" ? "none" : "coop")
     }
     const ACTION1_toggleCheat = () => {
-        if(GAME_isOver()) return
-        ACTION1 = (ACTION1 === false ? null : false)
+        if(gameOver) return
+        ACTION1 = (ACTION1 === "defect" ? "none" : "defect")
     }
-    const ACTION1_reset = () => ACTION1 = null
+    const ACTION1_reset = () => ACTION1 = "none"
 
     // ### Role: ACTION2
 
     // We'll do the same for the action state of the other player.
     // To avoid `let`, a kind of domain object could be created, with state and methods handling the action, 
     // then it can be bound to a Role only once with `const`. But let's keep things simple for now and see what happens.
-    let ACTION2 : boolean | null = null
+    let ACTION2 : Action = "none"
 
     const ACTION2_toggleCoop = () => {
-        if(GAME_isOver()) return
-        ACTION2 = (ACTION2 === true ? null : true)
+        if(gameOver) return
+        ACTION2 = (ACTION2 === "coop" ? "none" : "coop")
     }
     const ACTION2_toggleCheat = () => {
-        if(GAME_isOver()) return
-        ACTION2 = (ACTION2 === false ? null : false)
+        if(gameOver) return
+        ACTION2 = (ACTION2 === "defect" ? "none" : "defect")
     }
-    const ACTION2_reset = () => ACTION2 = null
+    const ACTION2_reset = () => ACTION2 = "none"
 
     // ### Role: MODALS
 
@@ -155,7 +156,7 @@
     }
 
     // Closing a modal can now be done by manipulating the array like a stack.
-    const MODALS_closeCurrent = (_ = null) => {
+    const MODALS_closeCurrent = (_?) => {
         MODALS.pop() // Remove the current modal        
         MODALS_open(MODALS.pop()) // Open the previous one, if it exists
     }
@@ -199,13 +200,13 @@
         const isInput = !!(target?.tagName.toUpperCase() == 'INPUT')
 
         if(e.code == 'Digit1' && !isInput) {
-            if(ACTION1 === null)
+            if(ACTION1 === "none")
                 ACTION1_toggleCoop()
             else
                 ACTION2_toggleCoop()
         }
         else if(e.code == 'Digit2' && !isInput) {
-            if(ACTION1 === null)
+            if(ACTION1 === "none")
                 ACTION1_toggleCheat()
             else
                 ACTION2_toggleCheat()
@@ -244,11 +245,14 @@
 
     const rebind = (state : AppState) => {
         try {
+            // state-dependent bindings
             PLAYER1 = state.players[0]
             PLAYER2 = state.players[1]
             ROUNDS = state.rounds
             GAME = new Dilemma(state)
             RULES = state.rules
+
+            // context-bound bindings
             ACTION1 = ACTION1
             ACTION2 = ACTION2
             //MODALS = MODALS
@@ -265,9 +269,9 @@
     let gameRounds = 10
 
     $: {
-        if(ACTION1 !== null && ACTION2 !== null) {
-            const a1 = ACTION1
-            const a2 = ACTION2
+        if(ACTION1 !== "none" && ACTION2 !== "none") {
+            const a1 : Choice = ACTION1
+            const a2 : Choice = ACTION2
             setTimeout(() => GAME_addRound(a1, a2), 150)
         }
     }
