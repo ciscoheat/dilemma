@@ -1,4 +1,7 @@
-export type Choice = boolean
+export enum Choice {
+    COOP = 1,
+    DEFECT = 0
+}
 export type Round = Readonly<FixedLengthArray<2, Choice>>
 export type Rounds = Readonly<Round[]>
 

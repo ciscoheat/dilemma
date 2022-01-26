@@ -48,7 +48,7 @@
 
     ///////////////////////////////////////////////////////
 
-    let ROUNDS : readonly Readonly<FixedLengthArray<2,boolean>>[]
+    let ROUNDS : readonly Readonly<FixedLengthArray<2,Choice>>[]
 
     ///////////////////////////////////////////////////////
    
@@ -59,8 +59,11 @@
     
     const GAME_isOver = () => gameOver
 
-    const GAME_addRound = (action1: Choice, action2: Choice) => {
-        update(state => state.rounds = castDraft(GAME.newRound(action1, action2)))
+    const GAME_addRound = (action1: boolean, action2: boolean) => {
+        update(state => state.rounds = castDraft(GAME.newRound(
+            action1 ? Choice.COOP : Choice.DEFECT, 
+            action2 ? Choice.COOP : Choice.DEFECT
+        )))
         ACTION1_reset()
         ACTION2_reset()
     }
