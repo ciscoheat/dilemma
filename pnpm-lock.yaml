@@ -5,7 +5,10 @@ specifiers:
   '@rollup/plugin-node-resolve': ^11.0.0
   '@rollup/plugin-typescript': ^8.0.0
   '@tsconfig/svelte': ^2.0.0
+  '@types/debug': ^4.1.7
   '@types/jest': ^27.4.0
+  '@types/node': '*'
+  debug: ^4.3.3
   immer: ^9.0.12
   jest: ^27.4.7
   npm-run-all: ^4.1.5
@@ -26,6 +29,7 @@ specifiers:
   typescript: ^4.0.0
 
 dependencies:
+  debug: 4.3.3
   immer: 9.0.12
   sirv-cli: 1.0.14
 
@@ -34,7 +38,9 @@ devDependencies:
   '@rollup/plugin-node-resolve': 11.2.1_rollup@2.63.0
   '@rollup/plugin-typescript': 8.3.0_cb044fd0a247ab74c5d8bfaf0e00abae
   '@tsconfig/svelte': 2.0.1
+  '@types/debug': 4.1.7
   '@types/jest': 27.4.0
+  '@types/node': 17.0.8
   jest: 27.4.7_ts-node@10.4.0
   npm-run-all: 4.1.5
   rollup: 2.63.0
@@ -48,7 +54,7 @@ devDependencies:
   svelte-check: 2.2.11_sass@1.46.0+svelte@3.44.3
   svelte-preprocess: 4.10.1_9889a4df2ecf36b01281fcee0297b234
   ts-jest: 27.1.3_9364f2ad0b7b67f00a4d081c662c6871
-  ts-node: 10.4.0_typescript@4.5.4
+  ts-node: 10.4.0_faf01e1d5a40372a98081522dcafc186
   tslib: 2.3.1
   typescript: 4.5.4
 
@@ -753,6 +759,12 @@ packages:
       '@babel/types': 7.16.8
     dev: true
 
+  /@types/debug/4.1.7:
+    resolution: {integrity: sha512-9AonUzyTjXXhEOa0DnqpzZi6VHlqKMswga9EXjpXnnqxwLtdvPPtlO8evrI5D9S6asFRCQ6v+wpiUKbw+vKqyg==}
+    dependencies:
+      '@types/ms': 0.7.31
+    dev: true
+
   /@types/estree/0.0.39:
     resolution: {integrity: sha512-EYNwp3bU+98cpU4lAWYYL7Zz+2gryWH1qbdDTidVd6hkiR6weksdbMadyXKXNPEkQFhXM+hVO9ZygomHXp+AIw==}
     dev: true
@@ -788,6 +800,10 @@ packages:
     dependencies:
       jest-diff: 27.4.6
       pretty-format: 27.4.6
+    dev: true
+
+  /@types/ms/0.7.31:
+    resolution: {integrity: sha512-iiUgKzV9AuaEkZqkOLDIvlQiL6ltuZd9tGcW3gwpnX8JbuiuhFlEGmmFXEXkN50Cvq7Os88IY2v0dkDqXYWVgA==}
     dev: true
 
   /@types/node/17.0.8:
@@ -1262,7 +1278,6 @@ packages:
         optional: true
     dependencies:
       ms: 2.1.2
-    dev: true
 
   /decimal.js/10.3.1:
     resolution: {integrity: sha512-V0pfhfr8suzyPGOx3nmq4aHqabehUZn6Ch9kyFpV79TGDTWFmHqUqXdabR7QHqxzrYolF4+tVmJhUG4OURg5dQ==}
@@ -2018,7 +2033,7 @@ packages:
       micromatch: 4.0.4
       pretty-format: 27.4.6
       slash: 3.0.0
-      ts-node: 10.4.0_typescript@4.5.4
+      ts-node: 10.4.0_faf01e1d5a40372a98081522dcafc186
     transitivePeerDependencies:
       - bufferutil
       - canvas
@@ -2635,7 +2650,6 @@ packages:
 
   /ms/2.1.2:
     resolution: {integrity: sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w==}
-    dev: true
 
   /natural-compare/1.4.0:
     resolution: {integrity: sha1-Sr6/7tdUHywnrPspvbvRXI1bpPc=}
@@ -3565,7 +3579,7 @@ packages:
       yargs-parser: 20.2.9
     dev: true
 
-  /ts-node/10.4.0_typescript@4.5.4:
+  /ts-node/10.4.0_faf01e1d5a40372a98081522dcafc186:
     resolution: {integrity: sha512-g0FlPvvCXSIO1JDF6S232P5jPYqBkRL9qly81ZgAOSU7rwI0stphCgd2kLiCrU9DjQCrJMWEqcNSjQL02s6d8A==}
     hasBin: true
     peerDependencies:
@@ -3584,6 +3598,7 @@ packages:
       '@tsconfig/node12': 1.0.9
       '@tsconfig/node14': 1.0.1
       '@tsconfig/node16': 1.0.2
+      '@types/node': 17.0.8
       acorn: 8.7.0
       acorn-walk: 8.2.0
       arg: 4.1.3

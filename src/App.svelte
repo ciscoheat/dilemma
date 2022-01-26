@@ -14,26 +14,23 @@
     // # Imports
 
     // First, import types and components. Nothing directly DCI-related, but some of these objects will be used as *Data*, the
-    // first part of the DCI acronym. These are simple objects like Svelte stores and data structures.
+    // first part of the DCI acronym. These are simple objects like Svelte stores and ./dilem./lib/dilemmaes.
 
-    import { Choice, Game, Rounds} from './game'
+    import { Choice, Dilemma, Rounds } from './lib/dilemma'
 
-    import Player from './lib/Player.svelte';
-    import Scorefield from './lib/Scorefield.svelte';
+    import Player from './Player.svelte';
+    import Scorefield from './Scorefield.svelte';
 
-    import ModalOpen from './lib/ModalOpen.svelte';
-    import ModalClose from './lib/ModalClose.svelte';
-    import Modal from './lib/Modal.svelte';
+    import ModalOpen from './modal/ModalOpen.svelte';
+    import ModalClose from './modal/ModalClose.svelte';
+    import Modal from './modal/Modal.svelte';
 
-    import { produce } from 'immer'
-    import { AppState, AppStorage } from './lib/appStorage';
+    import { produce, castDraft } from 'immer'
     import type { WritableDraft } from 'immer/dist/internal';
+    import { AppState, AppStorage } from './appStorage';
+    import debug from 'debug';
 
-    // Hack to get immer.js working
-    // https://github.com/immerjs/immer/issues/557
-    if (typeof window === 'object') {
-        ((window.process ??= <any>{}).env ??= {}).NODE_ENV ??= "production"
-    }
+    const d = debug('app')
 
     ///// Roles ///////////////////////////////////////////
 
@@ -49,7 +46,9 @@
         update(state => state.players[1] = name)
     }
 
-    let ROUNDS: readonly Readonly<FixedLengthArray<2,boolean>>[]
+    ///////////////////////////////////////////////////////
+
+    let ROUNDS : readonly Readonly<FixedLengthArray<2,boolean>>[]
 
     ///////////////////////////////////////////////////////
    
@@ -61,15 +60,13 @@
     const GAME_isOver = () => gameOver
 
     const GAME_addRound = (action1: Choice, action2: Choice) => {
-        update(state => {
-            state.rounds = GAME.newRound(action1, action2)
-        })
+        update(state => state.rounds = castDraft(GAME.newRound(action1, action2)))
         ACTION1_reset()
         ACTION2_reset()
     }
 
     const GAME_restart = (_ = null) => {
-        update(state => state.rounds = storage.initial().rounds as WritableDraft<Rounds>)
+        update(state => state.rounds = castDraft(storage.initial().rounds))
         ACTION1_reset()
         ACTION2_reset()
         MODALS_closeAll()
@@ -129,10 +126,6 @@
         ACTION2 = (ACTION2 === false ? null : false)
     }
     const ACTION2_reset = () => ACTION2 = null
-
-    // ### Role: MATCHROUNDS
-
-    let MATCHROUNDS = 10
 
     // ### Role: MODALS
 
@@ -246,12 +239,12 @@
         rebind(_state)
     }
 
-    const rebind = (state : typeof _state) => {
+    const rebind = (state : AppState) => {
         try {
             PLAYER1 = state.players[0]
             PLAYER2 = state.players[1]
             ROUNDS = state.rounds
-            GAME = new Game(state)
+            GAME = new Dilemma(state)
             RULES = state.rules
             ACTION1 = ACTION1
             ACTION2 = ACTION2
@@ -264,44 +257,22 @@
 
     rebind(_state)
 
-    ///////////////////////////////////////////////////////
+    ///// Transient state /////////////////////////////////
 
-    // Another thing we want to do is to add a new round when both player actions are specified.
-    // This check could be done in the `ACTION1` and `ACTION2` RoleMethods,
-    // but hey, this is Svelte. We can make it simpler with a declaration, but beware...
+    let gameRounds = 10
+
     $: {
-        // By comparing Roles with something, we are directly accessing the RolePlayers!
-        // This is not allowed, if you remember the out of character problem, opening up for all sorts of issues. 
-        // So we could very well be bitten by basically laziness in the future.
-        //
-        // However, it's a perfect way of getting into DCI, so if you've read this far and want to dig in,
-        // clone [the repo](https://github.com/ciscoheat/dilemma) and make an attempt to fix those Roles!
-        // Open an issue if you have any questions.
-        if(ACTION1 !== null && ACTION2 !== null) {            
+        if(ACTION1 !== null && ACTION2 !== null) {
             const a1 = ACTION1
             const a2 = ACTION2
             setTimeout(() => GAME_addRound(a1, a2), 150)
         }
     }
 
-    $: gameOver = ROUNDS.length >= MATCHROUNDS
+    $: currentRound = ROUNDS.length + 1
+    $: gameOver = currentRound >= gameRounds
     $: p1won = gameOver ? GAME.score[0] >= GAME.score[1] : null
     $: p2won = gameOver ? GAME.score[1] >= GAME.score[0] : null
-
-    // ## DCI resources
-
-    // The rest of the component should be pretty much self-explanatory if you've done the [Svelte tutorial](https://svelte.dev/tutorial/basics).
-    //
-    // This has just scratched the surface of the DCI paradigm, and there are plenty of resources if you want to know more, I'll list them right below.
-    //
-    // The best way to ask anything is by opening an issue at [the repo](https://github.com/ciscoheat/dilemma) of this project.
-    // Hope to hear from you!
-    //
-    // - [Official DCI website](http://fulloo.info/)
-    // - [FAQ](http://fulloo.info/doku.php?id=faq)
-    // - [Discussion group](https://groups.google.com/forum/?fromgroups#!forum/object-composition)
-    // - [Wikipedia](http://en.wikipedia.org/wiki/Data,_Context,_and_Interaction)
-    // - Tutorials in other languages: [Haxe](https://github.com/ciscoheat/haxedci) and [PHP](https://github.com/ciscoheat/dcisniffer#dci-tutorial).
 
 </script>
 
@@ -314,11 +285,11 @@
         <div class="grid-c-12 u-text-center">
             {#if !gameOver}
                 <h2 class="my-1">
-                    <div>Round {ROUNDS.length+1} /</div>
-                    {#if ROUNDS.length == 0}
-                        <input bind:value={MATCHROUNDS} type="number" min="1" class="u-inline">
+                    <div>Round {currentRound} /</div>
+                    {#if currentRound == 1}
+                        <input bind:value={gameRounds} type="number" min="1" class="u-inline">
                     {:else}
-                        <div>{MATCHROUNDS}</div>
+                        <div>{gameRounds}</div>
                     {/if}
                 </h2>
             {:else}
@@ -339,9 +310,6 @@
             <ModalOpen name={"rules"} opener={MODALS_open}>
                 <div class="btn outline btn-info">Change rules</div>
             </ModalOpen>
-        </div>
-        <div class="grid-c-12 u-text-center pt-1">
-            <a href="./docs/src/App.html" class="text-gray-500" target="_blank"><small>Annotated source code</small></a>
         </div>
     </div>
 </div>
@@ -413,12 +381,14 @@
     h2 {
         display: flex;
         justify-content: center;
+        align-items: center;
         gap: 10px;
 
         input {
             width: 80px !important;
             font-size: 2rem !important;
             padding: 0 10px !important;
+            height: 2.5rem !important;
         }
     }
 </style>

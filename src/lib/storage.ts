@@ -32,7 +32,7 @@ export abstract class Storage<K, T extends object> {
     protected abstract _load(key : K) : any
     protected abstract _save(key : K, value : T) : void
 
-    protected configuration = {
+    protected config = {
         throwOnIntegrityError: true,
         throwOnUpgradeError: true
     }
@@ -102,7 +102,7 @@ export abstract class Storage<K, T extends object> {
                 throw new UpgradeError("Upgrade to version " + objVersion + " failed", obj)
             }
         } catch(e) {
-            if(e instanceof UpgradeError && !this.configuration.throwOnUpgradeError)
+            if(e instanceof UpgradeError && !this.config.throwOnUpgradeError)
                 return this.initial()
             else
                 throw e
@@ -116,7 +116,7 @@ export abstract class Storage<K, T extends object> {
         try {
             this.checkIntegrity(obj)
         } catch(e) {
-            if(e instanceof IntegrityError && !this.configuration.throwOnIntegrityError)
+            if(e instanceof IntegrityError && !this.config.throwOnIntegrityError)
                 return this.initial()
             else
                 throw e

@@ -1,32 +1,32 @@
 export type Choice = boolean
-export type Round = FixedLengthArray<2, Choice>
-export type Rounds = Round[]
+export type Round = Readonly<FixedLengthArray<2, Choice>>
+export type Rounds = Readonly<Round[]>
 
 ///////////////////////////////////////////////////////////
 
-export interface GameState {
-    readonly rounds: Readonly<Rounds>
-    readonly rules: { 
-        readonly coop: number
-        readonly defect: number
-        readonly win: number 
-        readonly lose: number
+export interface DilemmaState {
+    readonly rounds : Rounds
+    readonly rules : {
+        readonly coop : number,
+        readonly defect : number,
+        readonly win : number,
+        readonly lose : number
     }
 }
 
-export const initialState = {
-    rounds: [] as const,
+export const initialState : DilemmaState = {
+    rounds: [],
     rules: {
         coop: 2,
         defect: 0,
         win: 3,
         lose: -1
-    } as const
-} as GameState
+    }
+}
 
 ///////////////////////////////////////////////////////////
 
-export class Game {
+export class Dilemma {
     constructor(data = initialState) {
         this.RULES = data.rules
         this.ROUNDS = data.rounds
