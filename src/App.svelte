@@ -82,7 +82,7 @@
         win: number; lose: number; 
     }
 
-    const RULES_update = (e : CustomEvent<{field : "coop" | "defect" | "win" | "lose", value : number}>) => {
+    const RULES_update = (e : CustomEvent<{field : keyof (typeof RULES), value : number}>) => {
         update(state => {
             state.rules[e.detail.field] = e.detail.value
         })
