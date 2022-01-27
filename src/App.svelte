@@ -4,7 +4,7 @@
     export type GameState = 
         | { state: "not started" }
         | { state: "started", round: number }
-        | { state: "ended" }
+        | { state: "ended", p1won: boolean, p2won: boolean }
 </script>
 
 <script lang="ts">
@@ -304,12 +304,9 @@
         ? { state: "not started" }
         : (
             currentRound > GAMEROUNDS
-                ? { state: "ended" }
+                ? { state: "ended", p1won: GAME.score[0] >= GAME.score[1], p2won: GAME.score[1] >= GAME.score[0] }
                 : { state: "started", round: currentRound }
         )) as GameState
-
-    $: p1won = gameState.state == "ended" ? GAME.score[0] >= GAME.score[1] : null
-    $: p2won = gameState.state == "ended" ? GAME.score[1] >= GAME.score[0] : null
 
 </script>
 
@@ -335,14 +332,14 @@
         </div>
         <div class="grid-c-5">
             <Player bind:name={PLAYER1} nr={1} update={PLAYER1_updateName} score={GAME.score[0]} 
-                won={p1won} state={ACTION1} coop={ACTION1_toggleCoop} cheat={ACTION1_toggleCheat}
+                action={ACTION1} coop={ACTION1_toggleCoop} cheat={ACTION1_toggleCheat}
                 gameState={gameState}
             ></Player>
         </div>
         <div class="grid-c-2"></div>
         <div class="grid-c-5">
             <Player bind:name={PLAYER2} nr={2} update={PLAYER2_updateName} score={GAME.score[1]} 
-                won={p2won} state={ACTION2} coop={ACTION2_toggleCoop} cheat={ACTION2_toggleCheat}
+                action={ACTION2} coop={ACTION2_toggleCoop} cheat={ACTION2_toggleCheat}
                 gameState={gameState}
             ></Player>
         </div>
