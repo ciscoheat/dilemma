@@ -161,31 +161,33 @@
     // since *Data* (the objects playing a Role) and *Function* (RoleMethods inside a Context) have
     // different rate of change. The Data changes very infrequently compared to the fast-moving, 
     // featured-packed functionality of an app.
-    const MODALS : string[] = []
+    type AppModals = "rules" | "restart" | "reset" 
+    const MODALS : AppModals[] = []
 
     // The contract for `MODALS`, a string array, is that simple since the CSS framework is using anchor tags to display modals.
     // That means we can keep track of them using only the anchor - a string.
     // Now we can add functionality by interacting with the `WINDOW` Role.
-    const MODALS_open = (name = '') => {
+    const MODALS_open = (name : AppModals) => {
         WINDOW_goto('#' + name)
-
-        if(!name) {
-            // Remember, only call or modify the RolePlayer through its own RoleMethods!
-            MODALS.length = 0
-            WINDOW_removeHash()
-        } else {
-            MODALS.push(name)
-        }
+        MODALS.push(name)
     }
 
     // Closing a modal can now be done by manipulating the array like a stack.
     const MODALS_closeCurrent = (_?) => {
-        MODALS.pop() // Remove the current modal        
-        MODALS_open(MODALS.pop()) // Open the previous one, if it exists
+        MODALS.pop()
+        const prev = MODALS.pop()
+        if(prev) MODALS_open(prev)
+        else MODALS_closeAll()
     }
 
     // Finally for the Role, closing all modals.
-    const MODALS_closeAll = () => MODALS_open('')
+    const MODALS_closeAll = () => {
+        MODALS.length = 0
+        WINDOW_goto('#')
+        WINDOW_removeHash()
+    }
+
+    const MODALS_current = () => MODALS[MODALS.length-1]
 
     // ### The WINDOW Role
 
@@ -234,19 +236,29 @@
             else
                 ACTION2_toggleCheat()
         }
+        else if(e.code == 'KeyR' && !isInput) {
+            MODALS_open("restart")
+        }
+        else if(e.code == 'KeyC' && !isInput && gameState.state == "not started") {
+            MODALS_open('rules')
+        }
         else if(e.code == "Escape") {
             MODALS_closeCurrent()
         }
         else if(e.code == "Enter") {
-            const p1 = document.querySelector('input.player1') as HTMLInputElement
-            const p2 = document.querySelector('input.player2') as HTMLInputElement
-
-            if(document.activeElement == p1) {
-                p2.focus()
-                p2.select()
-            }
-            else if(document.activeElement == p2) {
-                p2.blur()
+            if(MODALS_current() == 'restart') {
+                GAME_restart()
+            } else {                
+                const p1 = document.querySelector('input.player1') as HTMLInputElement
+                const p2 = document.querySelector('input.player2') as HTMLInputElement
+                
+                if(document.activeElement == p1) {
+                    p2.focus()
+                    p2.select()
+                }
+                else if(document.activeElement == p2) {
+                    p2.blur()
+                }
             }
         }
     }
