@@ -1,5 +1,10 @@
 <script lang="ts" context="module">
     export type Action = "none" | Choice
+
+    export type GameState = 
+        | { state: "not started" }
+        | { state: "started", round: number }
+        | { state: "ended" }
 </script>
 
 <script lang="ts">
@@ -70,7 +75,7 @@
         const target = e.target as HTMLInputElement
         const num = parseInt(target.value)
 
-        if(num && currentRound == 1)
+        if(num && gameState.state == "not started")
             update(state => state.gameRounds = Math.max(1, num))
     }
 
@@ -123,11 +128,11 @@
     let ACTION1 : Action = "none"
 
     const ACTION1_toggleCoop = () => {
-        if(gameOver) return
+        if(gameState.state == "ended") return
         ACTION1 = (ACTION1 === "C" ? "none" : "C")
     }
     const ACTION1_toggleCheat = () => {
-        if(gameOver) return
+        if(gameState.state == "ended") return
         ACTION1 = (ACTION1 === "D" ? "none" : "D")
     }
     const ACTION1_reset = () => ACTION1 = "none"
@@ -140,11 +145,11 @@
     let ACTION2 : Action = "none"
 
     const ACTION2_toggleCoop = () => {
-        if(gameOver) return
+        if(gameState.state == "ended") return
         ACTION2 = (ACTION2 === "C" ? "none" : "C")
     }
     const ACTION2_toggleCheat = () => {
-        if(gameOver) return
+        if(gameState.state == "ended") return
         ACTION2 = (ACTION2 === "D" ? "none" : "D")
     }
     const ACTION2_reset = () => ACTION2 = "none"
@@ -295,9 +300,16 @@
     }
 
     $: currentRound = ROUNDS.length + 1
-    $: gameOver = currentRound > GAMEROUNDS
-    $: p1won = gameOver ? GAME.score[0] >= GAME.score[1] : null
-    $: p2won = gameOver ? GAME.score[1] >= GAME.score[0] : null
+    $: gameState = (currentRound == 1 
+        ? { state: "not started" }
+        : (
+            currentRound > GAMEROUNDS
+                ? { state: "ended" }
+                : { state: "started", round: currentRound }
+        )) as GameState
+
+    $: p1won = gameState.state == "ended" ? GAME.score[0] >= GAME.score[1] : null
+    $: p2won = gameState.state == "ended" ? GAME.score[1] >= GAME.score[0] : null
 
 </script>
 
@@ -308,10 +320,10 @@
 <div class="u-flex u-justify-center">
     <div class="grid">
         <div class="grid-c-12 u-text-center">
-            {#if !gameOver}
+            {#if gameState.state != "ended"}
                 <h2 class="my-1">
                     <div>Round {currentRound} /</div>
-                    {#if currentRound == 1}
+                    {#if gameState.state == "not started"}
                         <input value={GAMEROUNDS} on:input={GAMEROUNDS_change} type="number" min="1" class="u-inline">
                     {:else}
                         <div>{GAMEROUNDS}</div>
@@ -324,22 +336,22 @@
         <div class="grid-c-5">
             <Player bind:name={PLAYER1} nr={1} update={PLAYER1_updateName} score={GAME.score[0]} 
                 won={p1won} state={ACTION1} coop={ACTION1_toggleCoop} cheat={ACTION1_toggleCheat}
-                currentRound={currentRound}
+                gameState={gameState}
             ></Player>
         </div>
         <div class="grid-c-2"></div>
         <div class="grid-c-5">
             <Player bind:name={PLAYER2} nr={2} update={PLAYER2_updateName} score={GAME.score[1]} 
                 won={p2won} state={ACTION2} coop={ACTION2_toggleCoop} cheat={ACTION2_toggleCheat}
-                currentRound={currentRound}
+                gameState={gameState}
             ></Player>
         </div>
         <div class="options grid-c-12 u-flex u-justify-center mt-4">
             <ModalOpen name={"restart"} opener={MODALS_open}>
                 <div class="btn outline btn-danger">Restart</div>
             </ModalOpen>
-            <ModalOpen name={"rules"} opener={(name) => { if(currentRound == 1) MODALS_open(name) }}>
-                <div class:btn-info={currentRound == 1} class:btn-light={currentRound > 1} class="btn outline">Change rules</div>
+            <ModalOpen name={"rules"} opener={(name) => { if(gameState.state == "not started") MODALS_open(name) }}>
+                <div class:btn-info={gameState.state == "not started"} class:btn-light={gameState.state != "not started"} class="btn outline">Change rules</div>
             </ModalOpen>
         </div>
     </div>
