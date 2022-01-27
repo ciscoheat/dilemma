@@ -315,8 +315,8 @@
             <ModalOpen name={"restart"} opener={MODALS_open}>
                 <div class="btn outline btn-danger">Restart</div>
             </ModalOpen>
-            <ModalOpen name={"rules"} opener={MODALS_open}>
-                <div class="btn outline btn-info">Change rules</div>
+            <ModalOpen name={"rules"} opener={(name) => { if(currentRound == 1) MODALS_open(name) }}>
+                <div class:btn-info={currentRound == 1} class:btn-light={currentRound > 1} class="btn outline">Change rules</div>
             </ModalOpen>
         </div>
     </div>
