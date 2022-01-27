@@ -24,12 +24,12 @@
     </div>
 </div>
 <div class="u-flex u-justify-space-evenly">
-    <div class="btn" class:btn-success={state === "coop"} on:click={() => coop()} title="Cooperate">
+    <div class="btn" class:btn-success={state === "C"} on:click={() => coop()} title="Cooperate">
         <span class="icon subtitle" style="font-size: 28px">
             <i class="far fa-wrapper fa-thumbs-up"></i>
         </span>
     </div>
-    <div class="btn" class:btn-danger={state === "defect"} on:click={() => cheat()} title="Cheat/defect">
+    <div class="btn" class:btn-danger={state === "D"} on:click={() => cheat()} title="Cheat/defect">
         <span class="icon subtitle" style="font-size: 28px">
             <i class="far fa-wrapper fa-hand-rock"></i>
         </span>

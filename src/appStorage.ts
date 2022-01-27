@@ -14,7 +14,7 @@ const appState = () => ({
     players: ['Player 1', 'Player 2'] as const
 })
 
-const d = debug('storage')
+const d = debug('appstorage')
 
 ///// Versioning //////////////////////////////////////////
 
@@ -30,10 +30,21 @@ type V2 = {
 
 /////////////////////////////
 
+type V3Choice = "coop" | "defect"
+
 type V3 = {
     // From enum to union
-    rounds: FixedLengthArray<2, V2Choice|Choice>[] 
+    rounds: FixedLengthArray<2, V2Choice|V3Choice>[] 
 }
+
+/////////////////////////////
+
+type V4 = {
+    // From enum to union
+    rounds: FixedLengthArray<2, V3Choice|Choice>[] 
+}
+
+///////////////////////////////////////////////////////////
 
 export class AppStorage extends LocalStorage<AppState> {
     constructor() {
@@ -51,6 +62,13 @@ export class AppStorage extends LocalStorage<AppState> {
                     r[1] == V2Choice.COOP ? "coop" : "defect"
                 ] as const)
                 return o
+            },
+            4: (o : V4) => {
+                o.rounds = o.rounds.map(r => [
+                    r[0] == "coop" ? "C" : "D",
+                    r[1] == "coop" ? "C" : "D"
+                ] as const)
+                return o
             }
         }
 
@@ -61,12 +79,12 @@ export class AppStorage extends LocalStorage<AppState> {
 
     protected _load(key: string): AppState {
         const value = super._load(key)
-        d("Loading", value)
+        d("Loaded", value)
         return value
     }
 
     protected _save(key: string, value: AppState): void {
         super._save(key, value)
-        d("Saving", value)
+        d("Saved", value)
     }
 }

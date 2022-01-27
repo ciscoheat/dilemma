@@ -1,4 +1,8 @@
-export type Choice = "coop" | "defect"
+/**
+ * C = Cooperate,
+ * D = Defect/cheat
+ */
+export type Choice = "C" | "D"
 export type Round = Readonly<FixedLengthArray<2, Choice>>
 export type Rounds = Readonly<Round[]>
 
@@ -61,9 +65,9 @@ export class Dilemma {
         const r = this.RULES
 
         if(player == opponent)
-            return player == "coop" ? r.coop : r.defect
+            return player == "C" ? r.coop : r.defect
         else
-            return player == "coop" ? r.lose : r.win
+            return player == "C" ? r.lose : r.win
     }
 
     ///////////////////////////////////////////////////////

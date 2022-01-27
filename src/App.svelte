@@ -106,11 +106,11 @@
 
     const ACTION1_toggleCoop = () => {
         if(gameOver) return
-        ACTION1 = (ACTION1 === "coop" ? "none" : "coop")
+        ACTION1 = (ACTION1 === "C" ? "none" : "C")
     }
     const ACTION1_toggleCheat = () => {
         if(gameOver) return
-        ACTION1 = (ACTION1 === "defect" ? "none" : "defect")
+        ACTION1 = (ACTION1 === "D" ? "none" : "D")
     }
     const ACTION1_reset = () => ACTION1 = "none"
 
@@ -123,11 +123,11 @@
 
     const ACTION2_toggleCoop = () => {
         if(gameOver) return
-        ACTION2 = (ACTION2 === "coop" ? "none" : "coop")
+        ACTION2 = (ACTION2 === "C" ? "none" : "C")
     }
     const ACTION2_toggleCheat = () => {
         if(gameOver) return
-        ACTION2 = (ACTION2 === "defect" ? "none" : "defect")
+        ACTION2 = (ACTION2 === "D" ? "none" : "D")
     }
     const ACTION2_reset = () => ACTION2 = "none"
 
@@ -257,6 +257,7 @@
             ACTION2 = ACTION2
             //MODALS = MODALS
             //WINDOW = WINDOW
+            d("rebind", state)
         } catch(error) {
             rebind(storage.initial())
         }

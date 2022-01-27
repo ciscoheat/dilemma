@@ -1,5 +1,8 @@
-interface Integrity extends Map<string, Integrity | null> {}
+import debug from "debug"
 
+const d = debug('storage')
+
+interface Integrity extends Map<string, Integrity | null> {}
 type Dirty = object
 
 export class IntegrityError extends Error {
@@ -48,7 +51,6 @@ export abstract class Storage<K, T extends object> {
             return Math.max(prev, next)
         }, 1)
         this.integrity = this.createIntegrity(initial())
-        //console.dir(this.integrity)
     }
 
     private isObject(x : any) { return x && typeof x === 'object' && !Array.isArray(x) }
@@ -92,13 +94,13 @@ export abstract class Storage<K, T extends object> {
                 let next = this.versions.get(++objVersion)
                 if(next) {
                     obj = next(obj)
-                    //console.log("Object upgraded to version " + objVersion)
                 }
             }
-
+            
             if(!Object.isFrozen(obj))
                 obj[this.versionProperty] = objVersion
-
+            
+            d("Object upgraded to version " + objVersion)
             return obj
         } catch(e) {
             throw new UpgradeError("Upgrade to version " + objVersion + " failed", obj)
@@ -111,6 +113,7 @@ export abstract class Storage<K, T extends object> {
         try {
             let obj = this.upgrade(this._load(key))
             this.checkIntegrity(obj)
+            d('Loaded', obj)
             return obj as T
         } catch(e) {
             if(e instanceof UpgradeError && !this.config.throwOnUpgradeError)
@@ -131,7 +134,7 @@ export abstract class Storage<K, T extends object> {
 
         obj[this.versionProperty] = this.currentVersion
         this._save(key, obj)
-        //console.log('Saved', value)
+        d('Saved', value)
     }
 
     /**
@@ -139,7 +142,7 @@ export abstract class Storage<K, T extends object> {
      * @returns a new state object.
      */
     public initial() : T {
-        //console.log('Creating initial object.')
+        d('Creating initial object.')
         return this._initial()
     }
 }
