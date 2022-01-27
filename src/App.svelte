@@ -52,8 +52,26 @@
 
     ///////////////////////////////////////////////////////
 
+    /**
+     * Rounds played in the current game
+     */
     let ROUNDS : {
-        length: number
+        readonly length: number
+    }
+
+    ///////////////////////////////////////////////////////
+
+    /**
+     * Number of rounds when the current game ends
+     */
+    let GAMEROUNDS : number
+
+    const GAMEROUNDS_change = (e) => {
+        const target = e.target as HTMLInputElement
+        const num = parseInt(target.value)
+
+        if(num && currentRound == 1)
+            update(state => state.gameRounds = Math.max(1, num))
     }
 
     ///////////////////////////////////////////////////////
@@ -250,6 +268,7 @@
             PLAYER2 = state.players[1]
             ROUNDS = state.rounds
             GAME = new Dilemma(state)
+            GAMEROUNDS = state.gameRounds
             RULES = state.rules
 
             // context-bound bindings
@@ -267,8 +286,6 @@
 
     ///// Transient state /////////////////////////////////
 
-    let gameRounds = 10
-
     $: {
         if(ACTION1 !== "none" && ACTION2 !== "none") {
             const a1 : Choice = ACTION1
@@ -278,7 +295,7 @@
     }
 
     $: currentRound = ROUNDS.length + 1
-    $: gameOver = currentRound >= gameRounds
+    $: gameOver = currentRound > GAMEROUNDS
     $: p1won = gameOver ? GAME.score[0] >= GAME.score[1] : null
     $: p2won = gameOver ? GAME.score[1] >= GAME.score[0] : null
 
@@ -295,9 +312,9 @@
                 <h2 class="my-1">
                     <div>Round {currentRound} /</div>
                     {#if currentRound == 1}
-                        <input bind:value={gameRounds} type="number" min="1" class="u-inline">
+                        <input value={GAMEROUNDS} on:input={GAMEROUNDS_change} type="number" min="1" class="u-inline">
                     {:else}
-                        <div>{gameRounds}</div>
+                        <div>{GAMEROUNDS}</div>
                     {/if}
                 </h2>
             {:else}
@@ -305,11 +322,17 @@
             {/if}
         </div>
         <div class="grid-c-5">
-            <Player bind:name={PLAYER1} nr={1} update={PLAYER1_updateName} score={GAME.score[0]} won={p1won} state={ACTION1} coop={ACTION1_toggleCoop} cheat={ACTION1_toggleCheat}></Player>
+            <Player bind:name={PLAYER1} nr={1} update={PLAYER1_updateName} score={GAME.score[0]} 
+                won={p1won} state={ACTION1} coop={ACTION1_toggleCoop} cheat={ACTION1_toggleCheat}
+                currentRound={currentRound}
+            ></Player>
         </div>
         <div class="grid-c-2"></div>
         <div class="grid-c-5">
-            <Player bind:name={PLAYER2} nr={2} update={PLAYER2_updateName} score={GAME.score[1]} won={p2won} state={ACTION2} coop={ACTION2_toggleCoop} cheat={ACTION2_toggleCheat}></Player>
+            <Player bind:name={PLAYER2} nr={2} update={PLAYER2_updateName} score={GAME.score[1]} 
+                won={p2won} state={ACTION2} coop={ACTION2_toggleCoop} cheat={ACTION2_toggleCheat}
+                currentRound={currentRound}
+            ></Player>
         </div>
         <div class="options grid-c-12 u-flex u-justify-center mt-4">
             <ModalOpen name={"restart"} opener={MODALS_open}>

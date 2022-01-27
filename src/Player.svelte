@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { Action } from "./App.svelte";
 
+    export let currentRound : number
     export let nr : 1 | 2
     export let won : boolean | null
 	export let name = ''
@@ -10,8 +11,8 @@
     export let coop : () => void
     export let cheat : () => void
 </script>
-
 <input 
+    disabled={(currentRound > 1) || null}
     class:player1={nr==1} class:player2={nr==2} 
     class="u-text-center input-large"
     type="text" value={name} 
@@ -40,5 +41,9 @@
     .score {
         margin-left: auto;
         margin-right: auto;
+    }
+
+    input:disabled {
+        background-color: initial !important;
     }
 </style>
