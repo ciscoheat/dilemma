@@ -3,7 +3,7 @@ import { debug } from 'debug'
 
 ///// Debugging /////////////
 
-debug.enable('')
+debug.enable('*')
 
 ///// Hacks /////////////////
 

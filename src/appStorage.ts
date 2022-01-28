@@ -1,4 +1,4 @@
-import { LocalStorage } from "./lib/storage"
+import { LocalStorageKeyField } from "./lib/storage"
 import { Choice, initialState as gameState } from "./lib/dilemma"
 
 import debug from "debug"
@@ -52,7 +52,7 @@ type V4 = {
 
 ///////////////////////////////////////////////////////////
 
-export class AppStorage extends LocalStorage<AppState> {
+export class AppStorage extends LocalStorageKeyField<AppState> {
     constructor() {
         const versions = {
             2: (o : V2) => {
@@ -84,16 +84,5 @@ export class AppStorage extends LocalStorage<AppState> {
         super(appState, versions)
         this.config.throwOnIntegrityError = false
         this.config.throwOnUpgradeError = false
-    }
-
-    protected _load(key: string): AppState {
-        const value = super._load(key)
-        d("Loaded", value)
-        return value
-    }
-
-    protected _save(key: string, value: AppState): void {
-        super._save(key, value)
-        d("Saved", value)
     }
 }

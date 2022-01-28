@@ -3,7 +3,7 @@ import debug from "debug"
 const d = debug('storage')
 
 interface Integrity extends Map<string, Integrity | null> {}
-type Dirty = object
+interface Dirty extends Object {}
 
 export class IntegrityError extends Error {
     readonly failedObject: any
@@ -23,18 +23,45 @@ export class UpgradeError extends Error {
     }
 }
 
+export class LoadError extends Error {
+    readonly failedObject: any
+    constructor(message: string, failedObject: any) {
+        super(message)
+        this.name = "LoadError"
+        this.failedObject = failedObject
+    }
+}
+
+export class SaveError extends Error {
+    readonly failedObject: any
+    constructor(message: string, failedObject: any) {
+        super(message)
+        this.name = "SaveError"
+        this.failedObject = failedObject
+    }
+}
+
 export type Versions = {
     [key: number]: (prev: object) => object
 }
 
 export abstract class Storage<K, T extends object> {
-    private readonly currentVersion : number
     private readonly versions : Map<number, (prev: object) => object>
     private readonly integrity : Integrity
     private readonly _initial : () => T
     
-    protected versionProperty = '__VERSION'
-    protected abstract _load(key : K) : any
+    protected readonly currentVersion : number
+
+    /**
+     * @param key Key of object to load
+     * @returns a tuple of [object, number], where number is the version number. It should be 1 if no versioning exists yet.
+     */
+    protected abstract _load(key : K) : [object, number]
+
+    /**
+     * @param key Key of object to save
+     * @param value Object to save
+     */
     protected abstract _save(key : K, value : T) : void
 
     protected config = {
@@ -66,39 +93,36 @@ export abstract class Storage<K, T extends object> {
         )
     }
 
-    private checkIntegrity(obj : Dirty, structure = this.integrity) {
+    private checkIntegrity(obj : Dirty) : T {
         //if(!this.isObject(obj)) throw new IntegrityError("Not an object", obj)
 
-        for(const [field, nextStructure] of structure) {
-            if(!(field in obj)) throw new IntegrityError("Missing field: " + field, obj)
-
-            if(nextStructure)
-                this.checkIntegrity(obj[field], nextStructure)
+        const _check = (obj : Dirty, integrity : Integrity) => {
+            for(const [field, nextStructure] of integrity) {
+                if(!(field in obj)) throw new IntegrityError("Missing field: " + field, obj)    
+                if(nextStructure) _check(obj[field], nextStructure)
+            }
         }
+
+        _check(obj, this.integrity)
+
+        return obj as T
     }
 
-    private upgrade(obj : Dirty) : Dirty {
-        if(obj == null || !obj[this.versionProperty])
-            throw new UpgradeError("Missing version field", obj)
-
-        let objVersion = obj[this.versionProperty]
-        
+    private upgrade(obj: Dirty, objVersion: number) : Dirty {
         if(objVersion === this.currentVersion)
             return obj
 
         if(!Number.isInteger(objVersion))
-            throw new UpgradeError("Invalid version number", obj)
+            throw new UpgradeError("Invalid version value", obj)
+
+        if(objVersion < 1 || objVersion > this.currentVersion)
+            throw new UpgradeError("Invalid version number: " + objVersion, obj)
 
         try {
             while(objVersion < this.currentVersion) {
                 let next = this.versions.get(++objVersion)
-                if(next) {
-                    obj = next(obj)
-                }
+                if(next) obj = next(obj)
             }
-            
-            if(!Object.isFrozen(obj))
-                obj[this.versionProperty] = objVersion
             
             d("Object upgraded to version " + objVersion)
             return obj
@@ -111,10 +135,11 @@ export abstract class Storage<K, T extends object> {
 
     public load(key : K) : T {
         try {
-            let obj = this.upgrade(this._load(key))
-            this.checkIntegrity(obj)
-            d('Loaded', obj)
-            return obj as T
+            const [loaded, version] = this._load(key)
+            const obj = this.upgrade(loaded, version)
+            const ok = this.checkIntegrity(obj)
+            d('Loaded', ok)
+            return ok
         } catch(e) {
             if(e instanceof UpgradeError && !this.config.throwOnUpgradeError)
                 return this.initial()
@@ -128,12 +153,7 @@ export abstract class Storage<K, T extends object> {
     }
 
     public save(key : K, value : T) {
-        const obj = Object.isFrozen(value)
-            ? Object.assign({}, value)
-            : value
-
-        obj[this.versionProperty] = this.currentVersion
-        this._save(key, obj)
+        this._save(key, value)
         d('Saved', value)
     }
 
@@ -147,13 +167,28 @@ export abstract class Storage<K, T extends object> {
     }
 }
 
-export class LocalStorage<T extends object> extends Storage<string, T> {
-    protected _load(key: string) {
-        return JSON.parse(window.localStorage.getItem(key) ?? "null")
+export class LocalStorageKeyField<T extends object> extends Storage<string, T> {
+    protected keyField = '__VERSION'
+
+    protected _load(key: string) : [object, number] {
+        const obj = JSON.parse(globalThis.localStorage.getItem(key) ?? "null")
+        const version = obj[this.keyField]
+
+        if(!version)
+            throw new UpgradeError("Missing version field", obj)
+
+        if(!parseInt(version))
+            throw new UpgradeError("Invalid version value", obj)
+
+        return [obj, version]
     }
 
     protected _save(key: string, value : T): void {
-        window.localStorage.setItem(key, JSON.stringify(value))
+        // Make a copy to add key field even if object is frozen
+        const obj = Object.assign({}, value)
+        obj[this.keyField] = this.currentVersion
+
+        globalThis.localStorage.setItem(key, JSON.stringify(obj))
     }
 
     constructor(initial : () => T, versions : Versions = {}) {
