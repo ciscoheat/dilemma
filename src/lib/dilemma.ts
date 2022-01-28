@@ -8,25 +8,15 @@ export type Rounds = Readonly<Round[]>
 
 ///////////////////////////////////////////////////////////
 
-export interface DilemmaState {
-    readonly rounds : Rounds
-    readonly rules : {
-        readonly coop : number,
-        readonly defect : number,
-        readonly win : number,
-        readonly lose : number
-    }
-}
-
-export const initialState : DilemmaState = {
-    rounds: [],
+export const initialState = {
+    rounds: [] as Rounds,
     rules: {
-        coop: 2,
-        defect: 0,
-        win: 3,
-        lose: -1
-    }
-}
+        coop: 2 as Readonly<number>,
+        defect: 0 as Readonly<number>,
+        win: 3 as Readonly<number>,
+        lose: -1 as Readonly<number>
+    } as const
+} as const
 
 ///////////////////////////////////////////////////////////
 

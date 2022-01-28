@@ -4,19 +4,14 @@ import { Choice, initialState as gameState } from "./lib/dilemma"
 import debug from "debug"
 import produce from "immer"
 
-export interface AppState {
-    readonly rounds: typeof gameState.rounds
-    readonly gameRounds: number
-    readonly rules: typeof gameState.rules
-    readonly players: Readonly<FixedLengthArray<2, string>>
-}
-
 const appState = () => ({
     rounds: gameState.rounds,
-    gameRounds: 10,
     rules: gameState.rules,
-    players: ['Player 1', 'Player 2'] as const
-})
+    gameRounds: 10 as Readonly<number>,
+    players: ['Player 1', 'Player 2'] as Readonly<string[]>
+} as const)
+
+export type AppState = ReturnType<typeof appState>
 
 const state = appState()
 
